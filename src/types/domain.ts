@@ -1,30 +1,32 @@
 // ==================== Package Information Types ====================
 
 
-export interface PackageDimensions{
-    length: number,
-    width: number,
-    height: number,
-    unit: 'in' | 'cm'
-};
+ export const packageDimensionUnits = ['cm', 'in'] as const;
+ export interface PackageDimensions {
+   length: number;
+   width: number;
+   height: number;
+   unit: (typeof packageDimensionUnits)[number];
+ }
 
 
-export interface PackageWeight{
-    value: number,
-    unit: 'lbs' | 'kg'
-};
+ export const packageWeightUnits = ['kg', 'lbs'] as const;
+ export interface PackageWeight {
+   value: number;
+   unit: (typeof packageWeightUnits)[number];
+ }
 
 
-export type PackageType = 'envelope' | 'box' | 'tube' | 'custom';
-
-
-export interface Package{
-    id: string,
-    dimensions: PackageDimensions,
-    weight: PackageWeight,
-    type: PackageType,
-    declaredValue?: number
-};
+ export const packageTypes = ['envelope', 'box', 'tube', 'custom'] as const;
+ export type PackageType = (typeof packageTypes)[number];
+ 
+ export interface Package {
+   id: string;
+   dimensions: PackageDimensions;
+   weight: PackageWeight;
+   type: PackageType;
+   declaredValue?: number;
+ }
 
 
 
@@ -47,82 +49,81 @@ export interface Address{
 // ==================== Shipping Service Options ====================
 
 
-export type ServiceSpeed = 'overnight' | 'two-day' | 'standard' | 'economy';
-
-
-export interface ShippingOptions{
-    speed: ServiceSpeed,
-    signatureRequired: boolean,
-    insurance: boolean,
-    fragileHandling: boolean,
-    saturdayDelivery: boolean,
-    insuredValue?: boolean
-};
+ export const serviceSpeeds = [
+   'overnight',
+   'two-day',
+   'standard',
+   'economy',
+ ] as const;
+ export type ServiceSpeed = (typeof serviceSpeeds)[number];
+ 
+ export interface ShippingOptions {
+   speed: ServiceSpeed;
+   signatureRequired: boolean;
+   insurance: boolean;
+   fragileHandling: boolean;
+   saturdayDelivery: boolean;
+   insuredValue?: number;
+ }
 
 
 
 // ==================== Carrier and Rate Information ====================
 
 
-export type CarrierName = 'USPS' | 'FedEx' | 'UPS' | 'DHL';
+export const carrierNames = ['FedEx', 'UPS'];
+ export type CarrierName = (typeof carrierNames)[number];
+ 
+ export interface ShippingRate {
+   id: string; 
+   carrier: CarrierName;
+   serviceCode: string; 
+   serviceName: string; 
+   speed: ServiceSpeed;
+   features: string[]; 
+   baseRate: number;
+   additionalFees: Fee[];
+   totalCost: number;
+   estimatedDeliveryDate: Date;
+   guaranteedDelivery: boolean;
+ }
 
 
-export interface ShippingRate{
-    id: string,
-    carrier: CarrierName,
-    serviceCode: string,
-    serviceName: string,
-    speed: ServiceSpeed,
-    features: string[],
-    baseRate: ShippingRate,
-    additionalFees: Fee[],
-    totalCost: number,
-    estimatedDeliveryDate: Date,
-    guaranteedDelivery : boolean
-};
+export const feeTypes = [
+   'insurance',
+   'signature',
+   'fragile',
+   'saturdayDelivery',
+ ] as const;
 
-
-export interface Fee{
-    type: FeeType,
-    amount: number,
-    description: string
-};
-
-
-export type FeeType = 
-  | 'FUEL'
-  | 'RESIDENTIAL_DELIVERY'
-  | 'REMOTE_AREA'
-  | 'SIGNATURE'
-  | 'INSURANCE'
-  | 'HANDLING'
-  | 'WEEKEND_DELIVERY'
-  | 'CUSTOMS'
-  | 'OTHER';
+ export interface Fee {
+   type: (typeof feeTypes)[number];
+   amount: number;
+   description: string;
+ }
 
 
 
 // ==================== API Request/Response Types ====================
 
 
-export interface RateRequest{
-    package: Package,
-    origin: Address,
-    destination: Address,
-    options: ShippingOptions
-};
-
-
-export interface RateResponse{
-    requestId: string,
-    rates: ShippingRate[],
-    errors: CarrierError[],
-    timestamp: Date
-};
-
-
-export interface CarrierError{
-    carrier: CarrierName,
-    message: string,
-    recomverable: boolean
-};
+export interface RateRequest {
+   package: Package;
+   origin: Address;
+   destination: Address;
+   options: ShippingOptions;
+   carriersFilter?: CarrierName[];
+ }
+ 
+ export interface RateResponse {
+   requestId: string;
+   rates: ShippingRate[];
+   errors: CarrierError[];
+   timestamp: Date;
+ }
+ 
+ export interface CarrierError {
+   carrier: CarrierName;
+   message: string;
+   recoverable: boolean;
+ }
