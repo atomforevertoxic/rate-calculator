@@ -1,11 +1,97 @@
 'use client';
 
+import { Address, CarrierName, Package, ShippingOptions } from '@/src/types/domain';
 import { useState } from 'react';
+import { AddressStep } from '../AddressStep';
+import { PackageDetailsStep } from '../PackageDetailsStep';
+import { ReviewStep } from '../ReviewStep';
+import { ShippingOptionsStep } from '../ShippingOptionsStep';
 
 type FormStep = 1 | 2 | 3 | 4;
 
+interface FormData {
+  package: Package;
+  origin: Address;
+  destination: Address;
+  options: ShippingOptions;
+}
+
 export default function RateCalculatorForm() {
+  const [carriersFilter, setCarriersFilter] = useState<CarrierName[] | undefined>();
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
+  const [formData, setFormData] = useState<FormData>({
+    package: {
+      id: 'temp-' + Date.now(),
+      type: 'box',
+      dimensions: {
+        length: 0,
+        width: 0,
+        height: 0,
+        unit: 'in',
+      },
+      weight: {
+        value: 0,
+        unit: 'lbs',
+      },
+    },
+    origin: {
+      name: '',
+      street1: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'US',
+    },
+    destination: {
+      name: '',
+      street1: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'US',
+    },
+    options: {
+      speed: 'standard',
+      signatureRequired: false,
+      insurance: false,
+      fragileHandling: false,
+      saturdayDelivery: false,
+    },
+  });
+
+  const handlePackageChange = (updatedPackage: Partial<Package>) => {
+    setFormData((prev) => ({
+      ...prev,
+      package: {
+        ...prev.package,
+        ...updatedPackage,
+      },
+    }));
+  };
+
+  const handleOriginChange = (updatedOrigin: Partial<Address>) => {
+    setFormData((prev) => ({
+      ...prev,
+      origin: { ...prev.origin, ...updatedOrigin },
+    }));
+  };
+
+  const handleDestinationChange = (updatedDestination: Partial<Address>) => {
+    setFormData((prev) => ({
+      ...prev,
+      destination: { ...prev.destination, ...updatedDestination },
+    }));
+  };
+
+  const handleOptionsChange = (updatedOptions: Partial<ShippingOptions>) => {
+    setFormData((prev) => ({
+      ...prev,
+      options: {
+        ...prev.options,
+        ...updatedOptions,
+      },
+    }));
+  };
 
   const nextStep = () => {
     if (currentStep < 4) {
@@ -53,31 +139,39 @@ export default function RateCalculatorForm() {
 
       <div className="min-h-[400px] p-6 border rounded-lg border-gray-200">
         {currentStep === 1 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Step 1: Package Details</h2>
-            <p className="text-gray-600">Package details form will be here</p>
-          </div>
+          <PackageDetailsStep data={formData.package} onChange={handlePackageChange} />
         )}
 
         {currentStep === 2 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Step 2: Origin & Destination</h2>
-            <p className="text-gray-600">Address forms will be here</p>
-          </div>
+          <AddressStep
+            origin={formData.origin}
+            destination={formData.destination}
+            onOriginChange={handleOriginChange}
+            onDestinationChange={handleDestinationChange}
+          />
         )}
 
         {currentStep === 3 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Step 3: Shipping Options</h2>
-            <p className="text-gray-600">Shipping options will be here</p>
-          </div>
+          <ShippingOptionsStep
+            data={formData.options}
+            carriersFilter={carriersFilter}
+            onChange={handleOptionsChange}
+            onCarriersFilterChange={setCarriersFilter}
+          />
         )}
 
         {currentStep === 4 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Step 4: Review & Submit</h2>
-            <p className="text-gray-600">Review and submit will be here</p>
-          </div>
+          <ReviewStep
+            formData={formData}
+            onEditStep={setCurrentStep}
+            onSubmit={() => {
+              // Здесь будет вызов API для расчета стоимости
+              console.log('Submitting form for rate calculation:', formData);
+              alert(
+                'Rate calculation would be triggered here. In Phase 3, this will call real carrier APIs.'
+              );
+            }}
+          />
         )}
       </div>
 
