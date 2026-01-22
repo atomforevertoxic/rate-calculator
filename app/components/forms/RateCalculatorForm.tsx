@@ -1,11 +1,12 @@
 'use client';
 
-import { Address, CarrierName, Package, ShippingOptions } from '@/src/types/domain';
+import { Address, CarrierName, Package, RateRequest, ShippingOptions } from '@/src/types/domain';
 import { useState } from 'react';
 import { AddressStep } from '../AddressStep';
 import { PackageDetailsStep } from '../PackageDetailsStep';
 import { ReviewStep } from '../ReviewStep';
 import { ShippingOptionsStep } from '../ShippingOptionsStep';
+import { FormNavigation } from './controls/FormNavigation';
 
 type FormStep = 1 | 2 | 3 | 4;
 
@@ -17,6 +18,7 @@ interface FormData {
 }
 
 export default function RateCalculatorForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [carriersFilter, setCarriersFilter] = useState<CarrierName[] | undefined>();
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [formData, setFormData] = useState<FormData>({
@@ -58,6 +60,31 @@ export default function RateCalculatorForm() {
       saturdayDelivery: false,
     },
   });
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const rateRequest: RateRequest = {
+        package: formData.package,
+        origin: formData.origin,
+        destination: formData.destination,
+        options: formData.options,
+        carriersFilter: carriersFilter,
+      };
+
+      console.log('Submitting RateRequest:', rateRequest);
+      // Здесь будет вызов API
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      alert('Rates calculated successfully! (This is a demo. In Phase 3, real rates will appear.)');
+    } catch (error) {
+      console.error('Error calculating rates:', error);
+      alert('Error calculating rates. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handlePackageChange = (updatedPackage: Partial<Package>) => {
     setFormData((prev) => ({
@@ -112,31 +139,6 @@ export default function RateCalculatorForm() {
         Calculate shipping rates across multiple carriers in 4 simple steps
       </p>
 
-      <div className="flex justify-between mb-8">
-        {[1, 2, 3, 4].map((step) => (
-          <div
-            key={step}
-            className={`flex flex-col items-center ${
-              step === currentStep ? 'text-blue-600' : 'text-gray-400'
-            }`}
-          >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                step === currentStep ? 'border-blue-600 bg-blue-50' : 'border-gray-300'
-              }`}
-            >
-              {step}
-            </div>
-            <span className="text-sm mt-2">
-              {step === 1 && 'Package'}
-              {step === 2 && 'Address'}
-              {step === 3 && 'Options'}
-              {step === 4 && 'Review'}
-            </span>
-          </div>
-        ))}
-      </div>
-
       <div className="min-h-[400px] p-6 border rounded-lg border-gray-200">
         {currentStep === 1 && (
           <PackageDetailsStep data={formData.package} onChange={handlePackageChange} />
@@ -164,37 +166,21 @@ export default function RateCalculatorForm() {
           <ReviewStep
             formData={formData}
             onEditStep={setCurrentStep}
-            onSubmit={() => {
-              // Здесь будет вызов API для расчета стоимости
-              console.log('Submitting form for rate calculation:', formData);
-              alert(
-                'Rate calculation would be triggered here. In Phase 3, this will call real carrier APIs.'
-              );
-            }}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         )}
       </div>
 
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={prevStep}
-          disabled={currentStep === 1}
-          className={`px-6 py-2 rounded-lg ${
-            currentStep === 1
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Previous
-        </button>
-
-        <button
-          onClick={nextStep}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          {currentStep === 4 ? 'Calculate Rates' : 'Next'}
-        </button>
-      </div>
+      <FormNavigation
+        currentStep={currentStep}
+        totalSteps={4}
+        onPrevious={prevStep}
+        onNext={nextStep}
+        nextButtonText={currentStep === 4 ? 'Calculate Rates' : 'Next'}
+        previousButtonText="Back"
+        showStepLabels={true}
+      />
     </div>
   );
 }

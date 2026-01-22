@@ -2,6 +2,7 @@
 
 import { Address, Package, ShippingOptions } from '@/src/types/domain';
 import { format } from 'date-fns';
+import { SubmitButton } from './forms/controls/SubmitButton';
 
 interface ReviewStepProps {
   formData: {
@@ -12,9 +13,15 @@ interface ReviewStepProps {
   };
   onEditStep: (step: 1 | 2 | 3) => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
-export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) {
+export function ReviewStep({
+  formData,
+  onEditStep,
+  onSubmit,
+  isSubmitting = false,
+}: ReviewStepProps) {
   const formatCurrency = (amount?: number) => {
     if (!amount) return 'Not specified';
     return new Intl.NumberFormat('en-US', {
@@ -74,7 +81,6 @@ export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) 
         </p>
       </div>
 
-      {/* Package Details Section */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-medium text-gray-900">Package Details</h3>
@@ -110,7 +116,6 @@ export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) 
         </div>
       </div>
 
-      {/* Addresses Section */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-medium text-gray-900">Addresses</h3>
@@ -161,7 +166,6 @@ export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) 
         </div>
       </div>
 
-      {/* Shipping Options Section */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-medium text-gray-900">Shipping Options</h3>
@@ -196,7 +200,6 @@ export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) 
         </div>
       </div>
 
-      {/* Summary & Submit */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -206,13 +209,15 @@ export function ReviewStep({ formData, onEditStep, onSubmit }: ReviewStepProps) 
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
+            <SubmitButton
               onClick={onSubmit}
-              className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              variant="primary"
+              loadingText="Calculating rates..."
+              disabled={isSubmitting}
+              pending={isSubmitting}
             >
               Calculate Rates
-            </button>
+            </SubmitButton>
             <button
               type="button"
               onClick={() => onEditStep(1)}
