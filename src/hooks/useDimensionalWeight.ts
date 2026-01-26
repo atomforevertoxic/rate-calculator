@@ -1,67 +1,56 @@
-import { PackageDimensions, PackageWeight } from '@/src/types/domain';
+// Custom hook for calculating dimensional weight and billable weight.
+'use client';
+
 import { useMemo } from 'react';
+import { Package } from '@/src/types/domain'; // Assuming your Package type is here
 
 interface DimensionalWeightResult {
   dimensionalWeight: number;
-  actualWeight: number;
   billableWeight: number;
   isDimensionalWeightApplied: boolean;
-  dimensionalFactor: number;
-  units: string;
 }
 
-export function useDimensionalWeight(
-  dimensions: PackageDimensions,
-  weight: PackageWeight
-): DimensionalWeightResult {
-  return useMemo(() => {
-    const dimsInInches =
-      dimensions.unit === 'in'
-        ? { length: dimensions.length, width: dimensions.width, height: dimensions.height }
-        : {
-            length: dimensions.length / 2.54,
-            width: dimensions.width / 2.54,
-            height: dimensions.height / 2.54,
-          };
+/**
+ * Custom hook to calculate the dimensional weight and billable weight of a package.
+ * It follows common industry standards (e.g., FedEx/UPS divisor).
+ *
+ * @param pkg The package object containing dimensions and weight.
+ * @returns An object with dimensionalWeight, billableWeight, and a flag indicating if dimensional weight was applied.
+ */
+export function useDimensionalWeight(pkg: Package): DimensionalWeightResult {
+  const result = useMemo(() => {
+    const { dimensions, weight } = pkg;
 
-    const weightInLbs = weight.unit === 'lbs' ? weight.value : weight.value * 2.20462;
+    let length = dimensions.length;
+    let width = dimensions.width;
+    let height = dimensions.height;
+    let actualWeight = weight.value;
 
-    const dimensionalWeight =
-      dimensions.unit === 'in'
-        ? (dimsInInches.length * dimsInInches.width * dimsInInches.height) / 139
-        : (dimensions.length * dimensions.width * dimensions.height) / 5000;
+    // Convert to inches and pounds for consistent calculation before applying divisor
+    if (dimensions.unit === 'cm') {
+      length = length / 2.54;
+      width = width / 2.54;
+      height = height / 2.54;
+    }
+    if (weight.unit === 'kg') {
+      actualWeight = actualWeight * 2.20462; // Convert kg to lbs (1 kg = 2.20462 lbs)
+    }
 
-    const roundedDimensionalWeight = Math.round(dimensionalWeight * 100) / 100;
-    const roundedActualWeight = Math.round(weightInLbs * 100) / 100;
+    const dimensionalDivisor = 139; // Common divisor for L x W x H in cubic inches (e.g., for FedEx/UPS)
 
-    const billableWeight = Math.max(roundedDimensionalWeight, roundedActualWeight);
-    const isDimensionalWeightApplied = roundedDimensionalWeight > roundedActualWeight;
+    // Calculate dimensional weight
+    const calculatedDimensionalWeight = (length * width * height) / dimensionalDivisor;
 
-    const dimensionalFactor = dimensions.unit === 'in' ? 139 : 5000;
+    // Billable weight is the greater of actual weight and dimensional weight
+    const billableWeight = Math.max(actualWeight, calculatedDimensionalWeight);
+    const isDimensionalWeightApplied = billableWeight > actualWeight;
 
     return {
-      dimensionalWeight: roundedDimensionalWeight,
-      actualWeight: roundedActualWeight,
-      billableWeight: Math.ceil(billableWeight),
+      dimensionalWeight: parseFloat(calculatedDimensionalWeight.toFixed(2)), // Round to 2 decimal places
+      billableWeight: parseFloat(billableWeight.toFixed(2)),       // Round to 2 decimal places
       isDimensionalWeightApplied,
-      dimensionalFactor,
-      units: 'lbs',
     };
-  }, [dimensions, weight]);
-}
+  }, [pkg.dimensions, pkg.weight]); // Recalculate if dimensions or weight change
 
-export function useWeightDisplay(weight: number, fromUnits: string, toUnits: string): number {
-  return useMemo(() => {
-    if (fromUnits === toUnits) return weight;
-
-    if (fromUnits === 'lbs' && toUnits === 'kg') {
-      return weight * 0.453592;
-    }
-
-    if (fromUnits === 'kg' && toUnits === 'lbs') {
-      return weight * 2.20462;
-    }
-
-    return weight;
-  }, [weight, fromUnits, toUnits]);
+  return result;
 }

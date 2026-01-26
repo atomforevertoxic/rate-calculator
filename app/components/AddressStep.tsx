@@ -1,12 +1,12 @@
 // This is a client component
 'use client';
 
-import { useEffect, useRef, useTransition } from 'react';
-import { Address } from '@/src/types/domain';
-import { AddressForm } from './forms/AddressForm';
-import { useFormState } from 'react-dom';
 import { validateAddress as serverValidateAddress } from '@/src/app/api/validate-address/route';
 import { ValidationError } from '@/src/services/validators/validation-chain';
+import { Address } from '@/src/types/domain';
+import { useEffect, useRef, useTransition } from 'react';
+import { useFormState } from 'react-dom';
+import { AddressForm } from './forms/AddressForm';
 
 // Define the state structure for useFormState
 interface AddressFormState {
@@ -26,8 +26,8 @@ interface AddressStepProps {
   onTriggerValidation?: (
     validateFn: (
       originFormData: FormData,
-      destinationFormData: FormData,
-    ) => Promise<{ origin: boolean; destination: boolean }>,
+      destinationFormData: FormData
+    ) => Promise<{ origin: boolean; destination: boolean }>
   ) => void;
 }
 
@@ -42,11 +42,14 @@ export function AddressStep({
   // useFormState hook to manage the state after server action submission for origin address
   const [originFormState, originAction] = useFormState(serverValidateAddress, initialState);
   // useFormState hook to manage the state after server action submission for destination address
-  const [destinationFormState, destinationAction] = useFormState(serverValidateAddress, initialState);
+  const [destinationFormState, destinationAction] = useFormState(
+    serverValidateAddress,
+    initialState
+  );
 
   // useTransition for manual form submission (debounced real-time validation)
-  const [isOriginPending, startOriginTransition] = useTransition();
-  const [isDestinationPending, startDestinationTransition] = useTransition();
+  const [, startOriginTransition] = useTransition();
+  const [, startDestinationTransition] = useTransition();
 
   // Refs to hold the current form data for server action submission
   const originFormRef = useRef<HTMLFormElement>(null);
@@ -77,12 +80,12 @@ export function AddressStep({
         // Submit destination form to trigger server validation
         void destinationAction(destinationFormData);
 
-        // The `useFormState` hook updates asynchronously. 
-        // We need a mechanism to wait for its state to reflect the latest submission. 
-        // A simple setTimeout is used here for demonstration, but a more robust solution 
-        // would involve custom hooks that combine `useFormStatus` and `useFormState` 
+        // The `useFormState` hook updates asynchronously.
+        // We need a mechanism to wait for its state to reflect the latest submission.
+        // A simple setTimeout is used here for demonstration, but a more robust solution
+        // would involve custom hooks that combine `useFormStatus` and `useFormState`
         // to return completion promises from the action.
-        await new Promise((resolve) => setTimeout(resolve, 300)); 
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         return {
           origin: originFormState.errors.length === 0,
@@ -90,7 +93,13 @@ export function AddressStep({
         };
       });
     }
-  }, [onTriggerValidation, originAction, destinationAction, originFormState.errors, destinationFormState.errors]);
+  }, [
+    onTriggerValidation,
+    originAction,
+    destinationAction,
+    originFormState.errors,
+    destinationFormState.errors,
+  ]);
 
   // Handler for origin address changes, with debounced server validation
   const handleOriginChange = (field: keyof Address, value: string) => {
@@ -104,7 +113,7 @@ export function AddressStep({
         // Trigger a server action for real-time validation
         // Using startTransition to avoid blocking rendering
         startOriginTransition(() => {
-          originAction(new FormData(originFormRef.current));
+          originAction(new FormData(originFormRef.current ?? undefined));
         });
       }
     }, 500); // Debounce for 500ms
@@ -121,7 +130,7 @@ export function AddressStep({
       if (destinationFormRef.current) {
         // Trigger a server action for real-time validation
         startDestinationTransition(() => {
-          destinationAction(new FormData(destinationFormRef.current));
+          destinationAction(new FormData(destinationFormRef.current ?? undefined));
         });
       }
     }, 500); // Debounce for 500ms
@@ -140,7 +149,6 @@ export function AddressStep({
               address={origin}
               onChange={handleOriginChange}
               errors={originFormState.errors}
-              isPending={isOriginPending} // Use useTransition pending state
               formId="origin-address-form"
             />
           </form>
@@ -154,7 +162,6 @@ export function AddressStep({
               address={destination}
               onChange={handleDestinationChange}
               errors={destinationFormState.errors}
-              isPending={isDestinationPending} // Use useTransition pending state
               formId="destination-address-form"
             />
           </form>

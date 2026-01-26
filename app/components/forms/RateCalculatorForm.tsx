@@ -11,7 +11,7 @@ import { FormNavigation } from './controls/FormNavigation';
 
 type FormStep = 1 | 2 | 3 | 4;
 
-interface FormData {
+interface FormState {
   package: Package;
   origin: Address;
   destination: Address;
@@ -25,7 +25,7 @@ export default function RateCalculatorForm() {
   // These states are used for real-time validation feedback for each step.
   // They visually indicate if a step is currently valid, but actual navigation
   // is blocked by `nextStep` calling `triggerValidation` methods.
-  const [isPackageStepValid, setIsPackageStepValid] = useState(false);
+
   const [isOriginAddressValid, setIsOriginAddressValid] = useState(false);
   const [isDestinationAddressValid, setIsDestinationAddressValid] = useState(false);
 
@@ -33,15 +33,17 @@ export default function RateCalculatorForm() {
   const [validationErrorMessage, setValidationErrorMessage] = useState<string>('');
 
   // Refs to trigger validation from child components' on next button click
-  const packageStepValidationRef = useRef<{ triggerValidation: () => Promise<boolean> } | null>(null);
+  const packageStepValidationRef = useRef<{ triggerValidation: () => Promise<boolean> } | null>(
+    null
+  );
   const addressStepValidationRef = useRef<{
     triggerValidation: (
       originFormData: FormData,
-      destinationFormData: FormData,
-    ) => Promise<{ origin: boolean; destination: boolean }>,
+      destinationFormData: FormData
+    ) => Promise<{ origin: boolean; destination: boolean }>;
   } | null>(null); // Type updated for AddressStep with server action logic
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormState>({
     package: {
       id: 'temp-' + Date.now(),
       type: 'box',
@@ -142,7 +144,6 @@ export default function RateCalculatorForm() {
 
   // Callback for PackageDetailsStep -> updates validation state for Step 1
   const handlePackageStepValidationChange = useCallback((isValid: boolean) => {
-    setIsPackageStepValid(isValid);
     // If the step becomes valid, hide the general warning
     if (isValid) {
       setShowValidationWarning(false);
@@ -151,20 +152,24 @@ export default function RateCalculatorForm() {
   }, []);
 
   // Callback for AddressStep -> updates validation states for origin and destination addresses
-  const handleAddressStepValidationChange = useCallback((step: 'origin' | 'destination', isValid: boolean) => {
-    if (step === 'origin') {
-      setIsOriginAddressValid(isValid);
-    } else {
-      setIsDestinationAddressValid(isValid);
-    }
+  const handleAddressStepValidationChange = useCallback(
+    (step: 'origin' | 'destination', isValid: boolean) => {
+      if (step === 'origin') {
+        setIsOriginAddressValid(isValid);
+      } else {
+        setIsDestinationAddressValid(isValid);
+      }
 
-    // If both addresses are valid, hide the general warning
-    // This check is specific to the current state of both address valid flags
-    if (isOriginAddressValid && isDestinationAddressValid) { // Use the current state, not potentially stale closure values
-      setShowValidationWarning(false);
-      setValidationErrorMessage('');
-    }
-  }, [isOriginAddressValid, isDestinationAddressValid]); // Add dependencies to ensure correct behavior
+      // If both addresses are valid, hide the general warning
+      // This check is specific to the current state of both address valid flags
+      if (isOriginAddressValid && isDestinationAddressValid) {
+        // Use the current state, not potentially stale closure values
+        setShowValidationWarning(false);
+        setValidationErrorMessage('');
+      }
+    },
+    [isOriginAddressValid, isDestinationAddressValid]
+  ); // Add dependencies to ensure correct behavior
 
   const nextStep = async () => {
     // Clear previous warnings before attempting to proceed
@@ -197,7 +202,7 @@ export default function RateCalculatorForm() {
 
         const result = await addressStepValidationRef.current.triggerValidation(
           originFormData,
-          destinationFormData,
+          destinationFormData
         );
 
         if (!result.origin || !result.destination) {
@@ -230,7 +235,10 @@ export default function RateCalculatorForm() {
       <div className="min-h-[400px] p-6 border rounded-lg border-gray-200">
         {/* Validation Warning */}
         {showValidationWarning && validationErrorMessage && (
-          <div role="alert" className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fadeIn">
+          <div
+            role="alert"
+            className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fadeIn"
+          >
             <div className="flex items-start">
               <svg
                 className="w-5 h-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0"
@@ -244,9 +252,7 @@ export default function RateCalculatorForm() {
                 />
               </svg>
               <div>
-                <p className="text-sm font-medium text-amber-800">
-                  {validationErrorMessage}
-                </p>
+                <p className="text-sm font-medium text-amber-800">{validationErrorMessage}</p>
                 <p className="text-sm text-amber-700 mt-1">
                   Please fill in all required fields and correct any errors.
                 </p>
@@ -277,10 +283,12 @@ export default function RateCalculatorForm() {
             onTriggerValidation={(
               validateOriginAndDestination: (
                 originFormData: FormData,
-                destinationFormData: FormData,
-              ) => Promise<{ origin: boolean; destination: boolean }>,
+                destinationFormData: FormData
+              ) => Promise<{ origin: boolean; destination: boolean }>
             ) => {
-              addressStepValidationRef.current = { triggerValidation: validateOriginAndDestination };
+              addressStepValidationRef.current = {
+                triggerValidation: validateOriginAndDestination,
+              };
             }}
           />
         )}

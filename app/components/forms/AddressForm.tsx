@@ -3,25 +3,16 @@
 
 import { ValidationError } from '@/src/services/validators/validation-chain';
 import { Address } from '@/src/types/domain';
-import { useId } from 'react'; // For generating unique IDs for accessibility
 
 interface AddressFormProps {
   title: string;
   address: Address;
   onChange: (field: keyof Address, value: string) => void;
   errors?: ValidationError[]; // Validation errors from server action
-  isPending: boolean; // Indicates if the form submission is pending
   formId: string; // Unique ID for the form for ARIA attributes
 }
 
-export function AddressForm({
-  title,
-  address,
-  onChange,
-  errors = [],
-  isPending,
-  formId,
-}: AddressFormProps) {
+export function AddressForm({ title, address, onChange, errors = [], formId }: AddressFormProps) {
   const countries = [
     { code: 'US', name: 'United States' },
     { code: 'GB', name: 'United Kingdom' },
@@ -30,9 +21,7 @@ export function AddressForm({
   // Helper to get errors for a specific field
   const getFieldErrors = (fieldName: string) => {
     // It considers both direct field errors and nested errors like 'dimensions.length'
-    return errors.filter(
-      (err) => err.field === fieldName || err.field.startsWith(`${fieldName}.`)
-    );
+    return errors.filter((err) => err.field === fieldName || err.field.startsWith(`${fieldName}.`));
   };
 
   // Renders error messages for a given field
@@ -66,7 +55,10 @@ export function AddressForm({
       <div className="space-y-4">
         {/* Name input */}
         <div>
-          <label htmlFor={generateInputId('name')} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={generateInputId('name')}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Name <span aria-hidden="true">*</span>
           </label>
           <input
@@ -80,15 +72,19 @@ export function AddressForm({
             required
             aria-required="true"
             aria-invalid={getFieldErrors('name').length > 0}
-            aria-describedby={getFieldErrors('name').length > 0 ? `${formId}-name-error` : undefined}
-            disabled={isPending} // Disable fields while form is pending
+            aria-describedby={
+              getFieldErrors('name').length > 0 ? `${formId}-name-error` : undefined
+            }
           />
           {renderError('name')}
         </div>
 
         {/* Street Address 1 input */}
         <div>
-          <label htmlFor={generateInputId('street1')} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={generateInputId('street1')}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Street Address 1 <span aria-hidden="true">*</span>
           </label>
           <input
@@ -102,15 +98,19 @@ export function AddressForm({
             required
             aria-required="true"
             aria-invalid={getFieldErrors('street1').length > 0}
-            aria-describedby={getFieldErrors('street1').length > 0 ? `${formId}-street1-error` : undefined}
-            disabled={isPending}
+            aria-describedby={
+              getFieldErrors('street1').length > 0 ? `${formId}-street1-error` : undefined
+            }
           />
           {renderError('street1')}
         </div>
 
         {/* Street Address 2 input */}
         <div>
-          <label htmlFor={generateInputId('street2')} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={generateInputId('street2')}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Street Address 2 (Optional)
           </label>
           <input
@@ -122,8 +122,9 @@ export function AddressForm({
             className={`w-full px-3 py-2 border ${getBorderClass('street2')} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900`}
             placeholder="Apt 4B, Suite 500"
             aria-invalid={getFieldErrors('street2').length > 0}
-            aria-describedby={getFieldErrors('street2').length > 0 ? `${formId}-street2-error` : undefined}
-            disabled={isPending}
+            aria-describedby={
+              getFieldErrors('street2').length > 0 ? `${formId}-street2-error` : undefined
+            }
           />
           {renderError('street2')}
         </div>
@@ -131,7 +132,10 @@ export function AddressForm({
         {/* City and State/Province inputs */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor={generateInputId('city')} className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor={generateInputId('city')}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               City <span aria-hidden="true">*</span>
             </label>
             <input
@@ -145,14 +149,18 @@ export function AddressForm({
               required
               aria-required="true"
               aria-invalid={getFieldErrors('city').length > 0}
-              aria-describedby={getFieldErrors('city').length > 0 ? `${formId}-city-error` : undefined}
-              disabled={isPending}
+              aria-describedby={
+                getFieldErrors('city').length > 0 ? `${formId}-city-error` : undefined
+              }
             />
             {renderError('city')}
           </div>
 
           <div>
-            <label htmlFor={generateInputId('state')} className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor={generateInputId('state')}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               State/Province <span aria-hidden="true">*</span>
             </label>
             <input
@@ -166,8 +174,9 @@ export function AddressForm({
               required
               aria-required="true"
               aria-invalid={getFieldErrors('state').length > 0}
-              aria-describedby={getFieldErrors('state').length > 0 ? `${formId}-state-error` : undefined}
-              disabled={isPending}
+              aria-describedby={
+                getFieldErrors('state').length > 0 ? `${formId}-state-error` : undefined
+              }
             />
             {renderError('state')}
           </div>
@@ -176,7 +185,10 @@ export function AddressForm({
         {/* Postal Code and Country inputs */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor={generateInputId('postalCode')} className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor={generateInputId('postalCode')}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Postal Code <span aria-hidden="true">*</span>
             </label>
             <input
@@ -190,14 +202,18 @@ export function AddressForm({
               required
               aria-required="true"
               aria-invalid={getFieldErrors('postalCode').length > 0}
-              aria-describedby={getFieldErrors('postalCode').length > 0 ? `${formId}-postalCode-error` : undefined}
-              disabled={isPending}
+              aria-describedby={
+                getFieldErrors('postalCode').length > 0 ? `${formId}-postalCode-error` : undefined
+              }
             />
             {renderError('postalCode')}
           </div>
 
           <div>
-            <label htmlFor={generateInputId('country')} className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor={generateInputId('country')}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Country <span aria-hidden="true">*</span>
             </label>
             <select
@@ -208,8 +224,9 @@ export function AddressForm({
               className={`w-full px-3 py-2 border ${getBorderClass('country')} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white`}
               aria-required="true"
               aria-invalid={getFieldErrors('country').length > 0}
-              aria-describedby={getFieldErrors('country').length > 0 ? `${formId}-country-error` : undefined}
-              disabled={isPending}
+              aria-describedby={
+                getFieldErrors('country').length > 0 ? `${formId}-country-error` : undefined
+              }
             >
               {countries.map((country) => (
                 <option key={country.code} value={country.code}>
@@ -223,7 +240,10 @@ export function AddressForm({
 
         {/* Phone input */}
         <div>
-          <label htmlFor={generateInputId('phone')} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={generateInputId('phone')}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Phone (Optional)
           </label>
           <input
@@ -235,8 +255,9 @@ export function AddressForm({
             className={`w-full px-3 py-2 border ${getBorderClass('phone')} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900`}
             placeholder="+1 (555) 123-4567"
             aria-invalid={getFieldErrors('phone').length > 0}
-            aria-describedby={getFieldErrors('phone').length > 0 ? `${formId}-phone-error` : undefined}
-            disabled={isPending}
+            aria-describedby={
+              getFieldErrors('phone').length > 0 ? `${formId}-phone-error` : undefined
+            }
           />
           {renderError('phone')}
         </div>
