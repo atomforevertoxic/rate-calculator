@@ -1,7 +1,8 @@
+// This is a client component
 'use client';
 
 import { Address, CarrierName, Package, RateRequest, ShippingOptions } from '@/src/types/domain';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { AddressStep } from '../AddressStep';
 import { PackageDetailsStep } from '../PackageDetailsStep';
 import { ReviewStep } from '../ReviewStep';
@@ -21,6 +22,25 @@ export default function RateCalculatorForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carriersFilter, setCarriersFilter] = useState<CarrierName[] | undefined>();
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
+  // These states are used for real-time validation feedback for each step.
+  // They visually indicate if a step is currently valid, but actual navigation
+  // is blocked by `nextStep` calling `triggerValidation` methods.
+  const [isPackageStepValid, setIsPackageStepValid] = useState(false);
+  const [isOriginAddressValid, setIsOriginAddressValid] = useState(false);
+  const [isDestinationAddressValid, setIsDestinationAddressValid] = useState(false);
+
+  const [showValidationWarning, setShowValidationWarning] = useState(false);
+  const [validationErrorMessage, setValidationErrorMessage] = useState<string>('');
+
+  // Refs to trigger validation from child components' on next button click
+  const packageStepValidationRef = useRef<{ triggerValidation: () => Promise<boolean> } | null>(null);
+  const addressStepValidationRef = useRef<{
+    triggerValidation: (
+      originFormData: FormData,
+      destinationFormData: FormData,
+    ) => Promise<{ origin: boolean; destination: boolean }>,
+  } | null>(null); // Type updated for AddressStep with server action logic
+
   const [formData, setFormData] = useState<FormData>({
     package: {
       id: 'temp-' + Date.now(),
@@ -72,8 +92,8 @@ export default function RateCalculatorForm() {
         carriersFilter: carriersFilter,
       };
 
-      console.log('Submitting RateRequest:', rateRequest);
-      // Здесь будет вызов API
+      console.warn('Submitting RateRequest:', rateRequest);
+      // Here will be the API call
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -120,7 +140,75 @@ export default function RateCalculatorForm() {
     }));
   };
 
-  const nextStep = () => {
+  // Callback for PackageDetailsStep -> updates validation state for Step 1
+  const handlePackageStepValidationChange = useCallback((isValid: boolean) => {
+    setIsPackageStepValid(isValid);
+    // If the step becomes valid, hide the general warning
+    if (isValid) {
+      setShowValidationWarning(false);
+      setValidationErrorMessage('');
+    }
+  }, []);
+
+  // Callback for AddressStep -> updates validation states for origin and destination addresses
+  const handleAddressStepValidationChange = useCallback((step: 'origin' | 'destination', isValid: boolean) => {
+    if (step === 'origin') {
+      setIsOriginAddressValid(isValid);
+    } else {
+      setIsDestinationAddressValid(isValid);
+    }
+
+    // If both addresses are valid, hide the general warning
+    // This check is specific to the current state of both address valid flags
+    if (isOriginAddressValid && isDestinationAddressValid) { // Use the current state, not potentially stale closure values
+      setShowValidationWarning(false);
+      setValidationErrorMessage('');
+    }
+  }, [isOriginAddressValid, isDestinationAddressValid]); // Add dependencies to ensure correct behavior
+
+  const nextStep = async () => {
+    // Clear previous warnings before attempting to proceed
+    setShowValidationWarning(false);
+    setValidationErrorMessage('');
+
+    if (currentStep === 1) {
+      // Trigger validation for PackageDetailsStep
+      if (packageStepValidationRef.current) {
+        const isValid = await packageStepValidationRef.current.triggerValidation();
+        if (!isValid) {
+          setShowValidationWarning(true);
+          setValidationErrorMessage('Please correct the package details before continuing.');
+          return; // Block navigation
+        }
+      }
+    } else if (currentStep === 2) {
+      // Trigger validation for AddressStep via Server Action
+      if (addressStepValidationRef.current) {
+        // Construct FormData for both origin and destination from current formData state
+        const originFormData = new FormData();
+        Object.entries(formData.origin).forEach(([key, value]) => {
+          if (value !== undefined) originFormData.append(key, value.toString());
+        });
+
+        const destinationFormData = new FormData();
+        Object.entries(formData.destination).forEach(([key, value]) => {
+          if (value !== undefined) destinationFormData.append(key, value.toString());
+        });
+
+        const result = await addressStepValidationRef.current.triggerValidation(
+          originFormData,
+          destinationFormData,
+        );
+
+        if (!result.origin || !result.destination) {
+          setShowValidationWarning(true);
+          setValidationErrorMessage('Please correct the address details before continuing.');
+          return; // Block navigation
+        }
+      }
+    }
+
+    // If the current step is valid, proceed to the next
     if (currentStep < 4) {
       setCurrentStep((prev) => (prev + 1) as FormStep);
     }
@@ -140,8 +228,42 @@ export default function RateCalculatorForm() {
       </p>
 
       <div className="min-h-[400px] p-6 border rounded-lg border-gray-200">
+        {/* Validation Warning */}
+        {showValidationWarning && validationErrorMessage && (
+          <div role="alert" className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fadeIn">
+            <div className="flex items-start">
+              <svg
+                className="w-5 h-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  {validationErrorMessage}
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Please fill in all required fields and correct any errors.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {currentStep === 1 && (
-          <PackageDetailsStep data={formData.package} onChange={handlePackageChange} />
+          <PackageDetailsStep
+            data={formData.package}
+            onChange={handlePackageChange}
+            onValidationChange={handlePackageStepValidationChange} // Pass callback to update step validity
+            onTriggerValidation={(validateFn) => {
+              packageStepValidationRef.current = { triggerValidation: validateFn };
+            }}
+          />
         )}
 
         {currentStep === 2 && (
@@ -150,6 +272,16 @@ export default function RateCalculatorForm() {
             destination={formData.destination}
             onOriginChange={handleOriginChange}
             onDestinationChange={handleDestinationChange}
+            onValidationChange={handleAddressStepValidationChange} // Pass callback to update address validity
+            // The onTriggerValidation prop for AddressStep now expects two FormData objects
+            onTriggerValidation={(
+              validateOriginAndDestination: (
+                originFormData: FormData,
+                destinationFormData: FormData,
+              ) => Promise<{ origin: boolean; destination: boolean }>,
+            ) => {
+              addressStepValidationRef.current = { triggerValidation: validateOriginAndDestination };
+            }}
           />
         )}
 
@@ -166,7 +298,7 @@ export default function RateCalculatorForm() {
           <ReviewStep
             formData={formData}
             onEditStep={setCurrentStep}
-            onSubmit={handleSubmit}
+            onSubmit={() => void handleSubmit()}
             isSubmitting={isSubmitting}
           />
         )}

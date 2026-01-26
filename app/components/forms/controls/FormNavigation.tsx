@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface FormNavigationProps {
   currentStep: number;
@@ -17,11 +17,11 @@ export function FormNavigation({
   onPrevious,
   onNext,
   isNextDisabled = false,
-  nextButtonText = 'Continue',
-  previousButtonText = 'Back',
+  nextButtonText = "Continue",
+  previousButtonText = "Back",
   showStepLabels = true,
 }: FormNavigationProps) {
-  const stepLabels = ['Package Details', 'Addresses', 'Shipping Options', 'Review & Submit'];
+  const stepLabels = ["Package Details", "Addresses", "Shipping Options", "Review & Submit"];
 
   const getStepProgress = () => {
     return (currentStep / totalSteps) * 100;
@@ -49,7 +49,7 @@ export function FormNavigation({
               <div
                 key={index}
                 className={`text-xs font-medium ${
-                  index + 1 <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                  index + 1 <= currentStep ? "text-blue-600" : "text-gray-400"
                 }`}
                 style={{ width: `${100 / totalSteps}%` }}
               >
@@ -57,13 +57,13 @@ export function FormNavigation({
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
                       index + 1 < currentStep
-                        ? 'bg-blue-600 text-white'
+                        ? "bg-blue-600 text-white"
                         : index + 1 === currentStep
-                          ? 'bg-blue-100 text-blue-600 border-2 border-blue-600'
-                          : 'bg-gray-100 text-gray-400 border-2 border-gray-300'
+                          ? "bg-blue-100 text-blue-600 border-2 border-blue-600"
+                          : "bg-gray-100 text-gray-400 border-2 border-gray-300"
                     }`}
                   >
-                    {index + 1 < currentStep ? '✓' : index + 1}
+                    {index + 1 < currentStep ? "✓" : index + 1}
                   </div>
                   <span className="text-center">{stepLabels[index] || `Step ${index + 1}`}</span>
                 </div>
@@ -101,8 +101,8 @@ export function FormNavigation({
             disabled={isNextDisabled}
             className={`px-8 py-3 font-medium rounded-lg transition-colors flex items-center gap-2 ${
               isNextDisabled
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
             {nextButtonText}
@@ -111,7 +111,7 @@ export function FormNavigation({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d={currentStep === totalSteps ? 'M5 13l4 4L19 7' : 'M9 5l7 7-7 7'}
+                d={currentStep === totalSteps ? "M5 13l4 4L19 7" : "M9 5l7 7-7 7"}
               />
             </svg>
           </button>

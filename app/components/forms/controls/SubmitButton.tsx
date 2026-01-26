@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { useFormStatus } from 'react-dom';
+import { ReactNode } from "react";
+import { useFormStatus } from "react-dom";
 
 interface SubmitButtonProps {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
   loadingText?: string;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: "primary" | "secondary" | "outline";
   fullWidth?: boolean;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   onClick?: () => void;
   pending?: boolean;
 }
 
 export function SubmitButton({
   children,
-  className = '',
+  className = "",
   disabled = false,
-  loadingText = 'Processing...',
-  variant = 'primary',
+  loadingText = "Processing...",
+  variant = "primary",
   fullWidth = false,
-  type = 'submit',
+  type = "submit",
   onClick,
   pending: externalPending,
 }: SubmitButtonProps) {
@@ -31,16 +31,16 @@ export function SubmitButton({
   const isDisabled = disabled || pending;
 
   const baseStyles =
-    'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2';
+    "font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2";
 
   const variantStyles = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 disabled:bg-gray-300',
+    primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300",
+    secondary: "bg-gray-600 text-white hover:bg-gray-700 disabled:bg-gray-300",
     outline:
-      'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200',
+      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200",
   };
 
-  const widthStyles = fullWidth ? 'w-full' : '';
+  const widthStyles = fullWidth ? "w-full" : "";
 
   return (
     <button
@@ -52,7 +52,7 @@ export function SubmitButton({
         ${variantStyles[variant]}
         ${widthStyles}
         ${className}
-        ${pending ? 'cursor-wait' : ''}
+        ${pending ? "cursor-wait" : ""}
         px-6 py-3
       `}
       aria-busy={pending}

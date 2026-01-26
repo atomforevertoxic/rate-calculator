@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface DeclaredValueInputProps {
   value?: number;
@@ -17,7 +17,7 @@ export function DeclaredValueInput({ value, onChange }: DeclaredValueInputProps)
           type="number"
           min="0"
           step="0.01"
-          value={value || ''}
+          value={value || ""}
           onChange={(e) => onChange(parseFloat(e.target.value) || undefined)}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           placeholder="0.00"

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { CarrierName, ServiceSpeed, ShippingOptions, carrierNames } from '@/src/types/domain';
-import { useEffect, useState } from 'react';
-import { ServiceSpeedSelector } from './forms/ServiceSpeedSelector';
+import { CarrierName, ServiceSpeed, ShippingOptions, carrierNames } from "@/src/types/domain";
+import { useEffect, useState } from "react";
+import { ServiceSpeedSelector } from "./forms/ServiceSpeedSelector";
 
 interface ShippingOptionsStepProps {
   data: ShippingOptions;
@@ -29,28 +29,28 @@ export function ShippingOptionsStep({
 
   const additionalServices = [
     {
-      id: 'signature',
-      label: 'Signature Required',
-      field: 'signatureRequired' as const,
-      description: 'Recipient must sign for delivery',
+      id: "signature",
+      label: "Signature Required",
+      field: "signatureRequired" as const,
+      description: "Recipient must sign for delivery",
     },
     {
-      id: 'insurance',
-      label: 'Insurance',
-      field: 'insurance' as const,
-      description: 'Additional insurance coverage',
+      id: "insurance",
+      label: "Insurance",
+      field: "insurance" as const,
+      description: "Additional insurance coverage",
     },
     {
-      id: 'fragile',
-      label: 'Fragile Handling',
-      field: 'fragileHandling' as const,
-      description: 'Special handling for fragile items',
+      id: "fragile",
+      label: "Fragile Handling",
+      field: "fragileHandling" as const,
+      description: "Special handling for fragile items",
     },
     {
-      id: 'saturday',
-      label: 'Saturday Delivery',
-      field: 'saturdayDelivery' as const,
-      description: 'Delivery available on Saturdays',
+      id: "saturday",
+      label: "Saturday Delivery",
+      field: "saturdayDelivery" as const,
+      description: "Delivery available on Saturdays",
     },
   ];
 
@@ -63,13 +63,13 @@ export function ShippingOptionsStep({
   const handleServiceToggle = (
     field: keyof Pick<
       ShippingOptions,
-      'signatureRequired' | 'insurance' | 'fragileHandling' | 'saturdayDelivery'
+      "signatureRequired" | "insurance" | "fragileHandling" | "saturdayDelivery"
     >
   ) => {
     const updated = {
       ...localData,
       [field]: !localData[field],
-      ...(field === 'insurance' && !localData[field] ? { insuredValue: undefined } : {}),
+      ...(field === "insurance" && !localData[field] ? { insuredValue: undefined } : {}),
     };
     setLocalData(updated);
     onChange({ [field]: updated[field] });
@@ -134,7 +134,7 @@ export function ShippingOptionsStep({
                 </label>
                 <p className="text-sm text-gray-500">{service.description}</p>
 
-                {service.field === 'insurance' && localData.insurance && (
+                {service.field === "insurance" && localData.insurance && (
                   <div className="mt-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Insurance Value ($)
@@ -145,7 +145,7 @@ export function ShippingOptionsStep({
                         type="number"
                         min="0"
                         step="0.01"
-                        value={localData.insuredValue || ''}
+                        value={localData.insuredValue || ""}
                         onChange={(e) => handleInsuredValueChange(parseFloat(e.target.value) || 0)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="Enter value"
@@ -171,7 +171,7 @@ export function ShippingOptionsStep({
               onClick={() => setShowCarrierFilter(!showCarrierFilter)}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
-              {showCarrierFilter ? 'Hide' : 'Filter by carrier'}
+              {showCarrierFilter ? "Hide" : "Filter by carrier"}
             </button>
             {showCarrierFilter && selectedCarriers.length > 0 && (
               <button
@@ -222,7 +222,7 @@ export function ShippingOptionsStep({
 
             {selectedCarriers.length > 0 ? (
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">Selected: {selectedCarriers.join(', ')}</p>
+                <p className="text-sm text-gray-500">Selected: {selectedCarriers.join(", ")}</p>
                 <p className="text-sm text-gray-500">
                   {selectedCarriers.length} of {carrierNames.length} carriers selected
                 </p>
