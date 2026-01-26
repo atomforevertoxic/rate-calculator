@@ -1,5 +1,6 @@
 'use client';
 
+import { createPackageValidationChain, validateWithChain } from '@/src/services/validators';
 import { Package, PackageType } from '@/src/types/domain';
 import { useState } from 'react';
 import { DeclaredValueInput } from './forms/DeclaredValueInput';
@@ -24,18 +25,36 @@ export function PackageDetailsStep({ data, onChange }: PackageDetailsStepProps) 
     const updated = { ...localData, dimensions };
     setLocalData(updated);
     onChange({ dimensions });
+
+    const validator = createPackageValidationChain();
+    validateWithChain(updated, validator).then((result) => {
+      if (!result.isValid) {
+        console.log('Package validation errors:', result.errors);
+      }
+    });
   };
 
   const handleWeightChange = (weight: Package['weight']) => {
     const updated = { ...localData, weight };
     setLocalData(updated);
     onChange({ weight });
+
+    const validator = createPackageValidationChain();
+    validateWithChain(updated, validator).then((result) => {
+      if (!result.isValid) {
+        console.log('Package validation errors:', result.errors);
+      }
+    });
   };
 
   const handleDeclaredValueChange = (declaredValue?: number) => {
     const updated = { ...localData, declaredValue };
     setLocalData(updated);
     onChange({ declaredValue });
+
+    if (declaredValue !== undefined && declaredValue < 0) {
+      console.log('Declared value cannot be negative');
+    }
   };
 
   const packageTypes: { value: PackageType; label: string; icon: string }[] = [

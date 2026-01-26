@@ -1,5 +1,6 @@
 'use client';
 
+import { createAddressValidationChain, validateWithChain } from '@/src/services/validators';
 import { Address } from '@/src/types/domain';
 import { useState } from 'react';
 import { AddressForm } from './forms/AddressForm';
@@ -20,16 +21,30 @@ export function AddressStep({
   const [localOrigin, setLocalOrigin] = useState<Address>(origin);
   const [localDestination, setLocalDestination] = useState<Address>(destination);
 
-  const handleOriginChange = (field: keyof Address, value: string) => {
+  const handleOriginChange = async (field: keyof Address, value: string) => {
     const updated = { ...localOrigin, [field]: value };
     setLocalOrigin(updated);
     onOriginChange({ [field]: value });
+
+    const validator = createAddressValidationChain();
+    const result = await validateWithChain(updated, validator);
+
+    if (!result.isValid) {
+      console.log('Address validation errors:', result.errors);
+    }
   };
 
-  const handleDestinationChange = (field: keyof Address, value: string) => {
+  const handleDestinationChange = async (field: keyof Address, value: string) => {
     const updated = { ...localDestination, [field]: value };
     setLocalDestination(updated);
     onDestinationChange({ [field]: value });
+
+    const validator = createAddressValidationChain();
+    const result = await validateWithChain(updated, validator);
+
+    if (!result.isValid) {
+      console.log('Destination validation errors:', result.errors);
+    }
   };
 
   return (
