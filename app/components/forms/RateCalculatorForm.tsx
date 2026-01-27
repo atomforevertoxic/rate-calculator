@@ -312,15 +312,43 @@ export default function RateCalculatorForm() {
         )}
       </div>
 
-      <FormNavigation
-        currentStep={currentStep}
-        totalSteps={4}
-        onPrevious={prevStep}
-        onNext={nextStep}
-        nextButtonText={currentStep === 4 ? 'Calculate Rates' : 'Next'}
-        previousButtonText="Back"
-        showStepLabels={true}
-      />
+      {currentStep === 4 ? (
+        <div className="mt-10 pt-8 border-t border-gray-200">
+          <div className="flex justify-between">
+            <div>
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="px-6 py-3 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back
+                </button>
+              )}
+            </div>
+
+            <div />
+          </div>
+        </div>
+      ) : (
+        <FormNavigation
+          currentStep={currentStep}
+          totalSteps={4}
+          onPrevious={prevStep}
+          onNext={nextStep}
+          nextButtonText={'Next'}
+          previousButtonText="Back"
+          showStepLabels={true}
+        />
+      )}
     </div>
   );
 }

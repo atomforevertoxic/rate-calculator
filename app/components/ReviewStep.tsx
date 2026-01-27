@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Address, Package, ShippingOptions } from "@/src/types/domain";
-import { format } from "date-fns";
-import { SubmitButton } from "./forms/controls/SubmitButton";
+import { Address, Package, ShippingOptions } from '@/src/types/domain';
+import { format } from 'date-fns';
+import { SubmitButton } from './forms/controls/SubmitButton';
 
 interface ReviewStepProps {
   formData: {
@@ -24,28 +24,28 @@ export function ReviewStep({
 }: ReviewStepProps) {
   const formatCurrency = (amount?: number) => {
     if (!amount) {
-      return "Not specified";
+      return 'Not specified';
     }
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
     }).format(amount);
   };
 
-  const formatDimensions = (dimensions: Package["dimensions"]) => {
+  const formatDimensions = (dimensions: Package['dimensions']) => {
     return `${dimensions.length} × ${dimensions.width} × ${dimensions.height} ${dimensions.unit}`;
   };
 
-  const formatWeight = (weight: Package["weight"]) => {
+  const formatWeight = (weight: Package['weight']) => {
     return `${weight.value} ${weight.unit}`;
   };
 
-  const getServiceSpeedLabel = (speed: ShippingOptions["speed"]) => {
-    const labels: Record<ShippingOptions["speed"], string> = {
-      overnight: "Overnight (1-2 days)",
-      "two-day": "2-Day (2-3 days)",
-      standard: "Standard (3-7 days)",
-      economy: "Economy (5-10 days)",
+  const getServiceSpeedLabel = (speed: ShippingOptions['speed']) => {
+    const labels: Record<ShippingOptions['speed'], string> = {
+      overnight: 'Overnight (1-2 days)',
+      'two-day': '2-Day (2-3 days)',
+      standard: 'Standard (3-7 days)',
+      economy: 'Economy (5-10 days)',
     };
     return labels[speed];
   };
@@ -53,25 +53,25 @@ export function ReviewStep({
   const getEnabledServices = (options: ShippingOptions) => {
     const services = [];
     if (options.signatureRequired) {
-      services.push("Signature Required");
+      services.push('Signature Required');
     }
     if (options.insurance) {
       services.push(`Insurance: ${formatCurrency(options.insuredValue)}`);
     }
     if (options.fragileHandling) {
-      services.push("Fragile Handling");
+      services.push('Fragile Handling');
     }
     if (options.saturdayDelivery) {
-      services.push("Saturday Delivery");
+      services.push('Saturday Delivery');
     }
-    return services.length > 0 ? services : ["None"];
+    return services.length > 0 ? services : ['None'];
   };
 
   const calculateEstimatedDelivery = () => {
     const today = new Date();
-    const daysToAdd: Record<ShippingOptions["speed"], number> = {
+    const daysToAdd: Record<ShippingOptions['speed'], number> = {
       overnight: 2,
-      "two-day": 3,
+      'two-day': 3,
       standard: 7,
       economy: 10,
     };
@@ -79,7 +79,7 @@ export function ReviewStep({
     const deliveryDate = new Date(today);
     deliveryDate.setDate(today.getDate() + daysToAdd[formData.options.speed]);
 
-    return format(deliveryDate, "MMMM d, yyyy");
+    return format(deliveryDate, 'MMMM d, yyyy');
   };
 
   return (
@@ -87,14 +87,14 @@ export function ReviewStep({
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Step 4: Review & Submit</h2>
         <p className="text-gray-600">
-          Please review all information below. Click{" "}
+          Please review all information below. Click{' '}
           <button
             type="button"
             onClick={() => onEditStep(1)}
             className="text-blue-600 hover:text-blue-800 underline font-medium"
           >
             Edit
-          </button>{" "}
+          </button>{' '}
           on any section to make changes.
         </p>
       </div>
@@ -171,7 +171,7 @@ export function ReviewStep({
                   <p className="text-gray-900">{formData.destination.street2}</p>
                 )}
                 <p className="text-gray-900">
-                  {formData.destination.city}, {formData.destination.state}{" "}
+                  {formData.destination.city}, {formData.destination.state}{' '}
                   {formData.destination.postalCode}
                 </p>
                 <p className="text-gray-900">{formData.destination.country}</p>

@@ -40,7 +40,7 @@ export interface Address {
 
 // ==================== Shipping Service Options ====================
 
-export const serviceSpeeds = ['overnight', 'two-day', 'standard', 'economy'] as const;
+export const serviceSpeeds = ['overnight', 'two-day', 'standard', 'economy', 'all'] as const;
 export type ServiceSpeed = (typeof serviceSpeeds)[number];
 
 export interface ShippingOptions {
@@ -54,7 +54,7 @@ export interface ShippingOptions {
 
 // ==================== Carrier and Rate Information ====================
 
-export const carrierNames = ['FedEx', 'UPS'];
+export const carrierNames = ['FedEx', 'UPS', 'USPS'] as const;
 export type CarrierName = (typeof carrierNames)[number];
 
 export interface ShippingRate {
@@ -100,4 +100,23 @@ export interface CarrierError {
   carrier: CarrierName;
   message: string;
   recoverable: boolean;
+}
+
+// ==================== Tracking Information ====================
+
+export interface TrackingEvent {
+  timestamp: Date;
+  status: string;
+  location: string;
+  description: string;
+}
+
+export interface TrackingInfo {
+  trackingNumber: string;
+  carrier: CarrierName;
+  status: 'Delivered' | 'In Transit' | 'Exception' | 'Pending';
+  lastUpdate: Date;
+  currentLocation: string;
+  estimatedDelivery?: Date;
+  events: TrackingEvent[];
 }
