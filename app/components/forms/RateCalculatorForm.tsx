@@ -142,6 +142,9 @@ export default function RateCalculatorForm() {
     }));
   };
 
+  // Convert package dimensions and weight between metric and imperial
+  // Unit conversion handled inside child inputs on toggle; no global convert button needed
+
   // Callback for PackageDetailsStep -> updates validation state for Step 1
   const handlePackageStepValidationChange = useCallback((isValid: boolean) => {
     // If the step becomes valid, hide the general warning
@@ -233,6 +236,7 @@ export default function RateCalculatorForm() {
       </p>
 
       <div className="min-h-[400px] p-6 border rounded-lg border-gray-200">
+        {/* Unit conversion handled in child inputs on unit toggle */}
         {/* Validation Warning */}
         {showValidationWarning && validationErrorMessage && (
           <div

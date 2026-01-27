@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { PackageWeight } from "@/src/types/domain";
+import { PackageWeight } from '@/src/types/domain';
 
 interface WeightInputProps {
   weight: PackageWeight;
@@ -15,9 +15,18 @@ export function WeightInput({ weight, onChange }: WeightInputProps) {
     });
   };
 
-  const handleUnitChange = (unit: "lbs" | "kg") => {
+  const handleUnitChange = (unit: 'lbs' | 'kg') => {
+    // convert weight value when switching units
+    const convert = (v: number, from: typeof weight.unit, to: typeof unit) => {
+      if (from === to) return v;
+      return from === 'lbs'
+        ? Math.round((v / 2.20462) * 100) / 100
+        : Math.round(v * 2.20462 * 100) / 100;
+    };
+
     onChange({
       ...weight,
+      value: convert(weight.value || 0, weight.unit, unit),
       unit,
     });
   };
@@ -29,18 +38,18 @@ export function WeightInput({ weight, onChange }: WeightInputProps) {
         <div className="flex border rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={() => handleUnitChange("lbs")}
+            onClick={() => handleUnitChange('lbs')}
             className={`px-4 py-2 ${
-              weight.unit === "lbs" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+              weight.unit === 'lbs' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
             Pounds (lbs)
           </button>
           <button
             type="button"
-            onClick={() => handleUnitChange("kg")}
+            onClick={() => handleUnitChange('kg')}
             className={`px-4 py-2 ${
-              weight.unit === "kg" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+              weight.unit === 'kg' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
             Kilograms (kg)
@@ -55,12 +64,12 @@ export function WeightInput({ weight, onChange }: WeightInputProps) {
             type="number"
             min="0"
             step="0.1"
-            value={weight.value || ""}
+            value={weight.value || ''}
             onChange={(e) => handleValueChange(parseFloat(e.target.value) || 0)}
             className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             placeholder="0.0"
           />
-          <span className="text-gray-500">{weight.unit === "lbs" ? "lbs" : "kg"}</span>
+          <span className="text-gray-500">{weight.unit === 'lbs' ? 'lbs' : 'kg'}</span>
         </div>
       </div>
     </div>

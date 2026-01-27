@@ -46,6 +46,7 @@ export function ReviewStep({
       'two-day': '2-Day (2-3 days)',
       standard: 'Standard (3-7 days)',
       economy: 'Economy (5-10 days)',
+      all: 'All services',
     };
     return labels[speed];
   };
@@ -74,6 +75,7 @@ export function ReviewStep({
       'two-day': 3,
       standard: 7,
       economy: 10,
+      all: 7,
     };
 
     const deliveryDate = new Date(today);
