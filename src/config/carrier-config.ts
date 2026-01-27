@@ -96,3 +96,4 @@ class CarrierConfigManager {
 }
 
 export const carrierConfigManager = CarrierConfigManager.getInstance();
+export { CarrierConfigManager };
