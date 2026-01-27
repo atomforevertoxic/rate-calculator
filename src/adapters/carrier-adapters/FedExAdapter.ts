@@ -1,26 +1,20 @@
-// Lightweight FedEx adapter — use local minimal types to avoid depending on an external type file
+import { CarrierCredentials } from '@/src/config/carrier-config';
+import { Fee, PackageType, RateRequest, ServiceSpeed, ShippingRate } from '@/src/types/domain';
 import { addDays, format, parseISO } from 'date-fns';
-import type { Fee, PackageType, RateRequest, ServiceSpeed, ShippingRate } from '../../types/domain';
-// Avoid importing local adapter type to reduce tight coupling in this file
-
-// Minimal FedEx types (loose any) to keep adapter implementation self-contained for now
-type FedExRateResponse = any;
-type FedExRateReplyDetail = any;
-type FedExRatedShipmentDetail = any;
-type FedExRateRequest = any;
-type FedExAlert = any;
-type FedExServiceType = string;
-
-enum FedExPackagingType {
-  YOUR_PACKAGING = 'YOUR_PACKAGING',
-  FEDEX_ENVELOPE = 'FEDEX_ENVELOPE',
-  FEDEX_TUBE = 'FEDEX_TUBE',
-}
-
-const DELIVERY_DAYS: Record<'DOMESTIC' | 'INTERNATIONAL', Record<ServiceSpeed | 'all', number>> = {
-  DOMESTIC: { overnight: 1, 'two-day': 2, standard: 5, economy: 7, all: 5 },
-  INTERNATIONAL: { overnight: 3, 'two-day': 5, standard: 10, economy: 14, all: 10 },
-};
+import { CarrierAdapter } from './adapter';
+import {
+  DELIVERY_DAYS,
+  FedExAddress,
+  FedExAlert,
+  FedExPackagingType,
+  FedExRateReplyDetail,
+  FedExRateRequest,
+  FedExRateResponse,
+  FedExRatedShipmentDetail,
+  FedExServiceType,
+  RateRequestType,
+  SpecialServiceType,
+} from './FedExAdapter_types';
 
 interface TokenCache {
   token: string;
@@ -42,7 +36,13 @@ const ENDPOINTS = {
   OAUTH_TOKEN: '/oauth/token',
 } as const;
 
-export class FedExAdapter {
+// Helper function: round to 2 decimal places
+const roundToTwoDecimals = (num: number): number => Math.round(num * 100) / 100;
+
+// Helper function: log warnings
+const logWarning = (message: string): void => console.warn(message);
+
+export class FedExAdapter implements CarrierAdapter {
   private baseUrl: string;
   private apiKey: string;
   private apiSecret: string;
@@ -51,7 +51,7 @@ export class FedExAdapter {
   private tokenCache: TokenCache | null = null;
   private tokenPromise: Promise<string> | null = null;
 
-  constructor(config: any) {
+  constructor(config: CarrierCredentials) {
     this.baseUrl = config.endpoint;
     this.apiKey = config.apiKey;
     this.apiSecret = config.apiSecret;
@@ -82,7 +82,8 @@ export class FedExAdapter {
     });
 
     if (!response.ok) {
-      await response.text();
+      const errorBody = await response.text();
+      console.log('[FedEx] API Error:', errorBody);
       throw new Error(`FedEx API error (${response.status}): ${response.statusText}`);
     }
 
@@ -102,6 +103,8 @@ export class FedExAdapter {
 
     for (let index = 0; index < rateReplyDetails.length; index++) {
       const detail = rateReplyDetails[index];
+      if (!detail) continue;
+
       const ratedShipment = this.selectRate(detail.ratedShipmentDetails);
       if (!ratedShipment) continue;
 
@@ -109,7 +112,7 @@ export class FedExAdapter {
       const baseRate = ratedShipment.totalBaseCharge ?? 0;
 
       const additionalFees: Fee[] =
-        ratedShipment.shipmentRateDetail?.surCharges?.map((surcharge: any) => ({
+        ratedShipment.shipmentRateDetail?.surCharges?.map((surcharge) => ({
           type: this.mapSurchargeType(surcharge.type),
           amount: surcharge.amount,
           description: surcharge.description || surcharge.type,
@@ -124,7 +127,7 @@ export class FedExAdapter {
         features: this.extractFeatures(detail, options),
         baseRate,
         additionalFees,
-        totalCost: totalNetCharge, //roundToTwoDecimals(totalNetCharge),
+        totalCost: roundToTwoDecimals(totalNetCharge),
         estimatedDeliveryDate: this.parseDeliveryDate(detail),
         guaranteedDelivery: !detail.operationalDetail?.ineligibleForMoneyBackGuarantee,
       });
@@ -156,22 +159,22 @@ export class FedExAdapter {
       shipper: { address: this.buildFedExAddress(request.origin) },
       recipient: { address: this.buildFedExAddress(request.destination) },
       shipDateStamp: format(new Date(), 'yyyy-MM-dd'),
-      rateRequestType: ['LIST'],
+      rateRequestType: [RateRequestType.LIST],
       requestedPackageLineItems: [
         {
           weight: {
             units: weightUnit,
-            value: request.package.weight.value, //roundToTwoDecimals(request.package.weight.value),
+            value: roundToTwoDecimals(request.package.weight.value),
           },
           dimensions: {
-            length: request.package.dimensions.length, //roundToTwoDecimals(request.package.dimensions.length),
-            width: request.package.dimensions.width, //roundToTwoDecimals(request.package.dimensions.width),
-            height: request.package.dimensions.height, //roundToTwoDecimals(request.package.dimensions.height),
+            length: roundToTwoDecimals(request.package.dimensions.length),
+            width: roundToTwoDecimals(request.package.dimensions.width),
+            height: roundToTwoDecimals(request.package.dimensions.height),
             units: dimensionUnit,
           },
           ...(request.options.signatureRequired && {
             specialServices: {
-              specialServiceTypes: ['SIGNATURE_OPTION'],
+              specialServiceTypes: [SpecialServiceType.SIGNATURE_OPTION],
             },
           }),
         },
@@ -215,7 +218,7 @@ export class FedExAdapter {
     return FedExPackagingType.YOUR_PACKAGING;
   }
 
-  private buildFedExAddress(address: RateRequest['origin']): any {
+  private buildFedExAddress(address: RateRequest['origin']): FedExAddress {
     const streetLines = [address.street1];
     if (address.street2) streetLines.push(address.street2);
 
@@ -303,8 +306,8 @@ export class FedExAdapter {
 
   private formatTransitTime(transitTime: string): string {
     const match = transitTime.match(/(\d+)_DAY/i);
-    if (match) {
-      const days = parseInt(match[1] as string, 10);
+    if (match && match[1]) {
+      const days = parseInt(match[1], 10);
       return `${days} ${days === 1 ? 'Day' : 'Days'}`;
     }
 
@@ -320,9 +323,9 @@ export class FedExAdapter {
       NINE: 9,
       TEN: 10,
     };
-    const first = transitTime.split('_')[0] || '';
+    const first = transitTime.split('_')[0];
     if (first && words[first]) {
-      const days = words[first as keyof typeof words];
+      const days = words[first];
       return `${days} ${days === 1 ? 'Day' : 'Days'}`;
     }
 
@@ -336,7 +339,7 @@ export class FedExAdapter {
       try {
         return parseISO(dateStr);
       } catch {
-        //logWarning(`FedEx: Failed to parse delivery date: ${dateStr}`);
+        logWarning(`FedEx: Failed to parse delivery date: ${dateStr}`);
       }
     }
 
@@ -374,10 +377,12 @@ export class FedExAdapter {
 
   private handleAlerts(alerts: FedExAlert[]): void {
     const errors = alerts.filter((a) => a.alertType === 'ERROR');
-    if (errors.length > 0) {
+    if (errors.length > 0 && errors[0]) {
       throw new Error(`FedEx API Error: ${errors[0].message}`);
     }
-    alerts.filter((a) => a.alertType === 'WARNING').forEach((a) => console.log(a)); //logWarning(`FedEx: ${a.message}`));
+    alerts
+      .filter((a) => a.alertType === 'WARNING')
+      .forEach((a) => logWarning(`FedEx: ${a.message}`));
   }
 
   private async getAccessToken(): Promise<string> {

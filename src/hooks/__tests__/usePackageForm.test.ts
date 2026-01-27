@@ -359,14 +359,14 @@ describe('usePackageForm Hook', () => {
       expect(result.current.carriersFilter).toEqual(['FedEx']);
     });
 
-    it('should handle multiple carriers in filter', () => {
+    it('should handle FedEx carrier in filter', () => {
       const { result } = renderHook(() => usePackageForm());
 
       act(() => {
-        result.current.setCarriersFilter(['FedEx', 'UPS']);
+        result.current.setCarriersFilter(['FedEx']);
       });
 
-      expect(result.current.carriersFilter).toEqual(['FedEx', 'UPS']);
+      expect(result.current.carriersFilter).toEqual(['FedEx']);
     });
   });
 

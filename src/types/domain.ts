@@ -54,7 +54,7 @@ export interface ShippingOptions {
 
 // ==================== Carrier and Rate Information ====================
 
-export const carrierNames = ['FedEx', 'UPS', 'USPS'] as const;
+export const carrierNames = ['FedEx'] as const;
 export type CarrierName = (typeof carrierNames)[number];
 
 export interface ShippingRate {
@@ -71,10 +71,11 @@ export interface ShippingRate {
   guaranteedDelivery: boolean;
 }
 
-export const feeTypes = ['insurance', 'signature', 'fragile', 'saturdayDelivery'] as const;
+export const FEE_TYPE_OPTIONS = ['insurance', 'fragile', 'saturdayDelivery', 'signature'] as const;
+export type FeeType = (typeof FEE_TYPE_OPTIONS)[number];
 
 export interface Fee {
-  type: (typeof feeTypes)[number];
+  type: string;
   amount: number;
   description: string;
 }
