@@ -7,16 +7,35 @@ import { Address } from '@/src/types/domain';
 import { z } from 'zod';
 
 // Zod schema for basic format validation
-const addressSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  street1: z.string().min(1, 'Street Address 1 is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().length(2, 'State must be 2 characters'),
-  postalCode: z.string().min(5, 'Postal Code must be at least 5 characters'),
-  country: z.string().length(2, 'Country must be 2 characters'),
-  street2: z.string().optional(),
-  phone: z.string().optional(),
-});
+const addressSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    street1: z.string().min(1, 'Street Address 1 is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().min(1, 'State/Province is required'),
+    postalCode: z.string().min(3, 'Postal Code is required'),
+    country: z.string().length(2, 'Country must be 2 characters'),
+    street2: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // US states must be exactly 2 characters
+      if (data.country === 'US') {
+        return data.state.length === 2;
+      }
+      // UK regions can be 2-3 characters
+      if (data.country === 'GB') {
+        return data.state.length >= 2 && data.state.length <= 3;
+      }
+      // Other countries have flexible state length
+      return true;
+    },
+    {
+      message: 'Invalid state/province format for the selected country',
+      path: ['state'],
+    }
+  );
 
 /**
  * Server Action to validate an address.

@@ -170,7 +170,7 @@ export function AddressForm({ title, address, onChange, errors = [], formId }: A
               value={address.state}
               onChange={(e) => onChange('state', e.target.value)}
               className={`w-full px-3 py-2 border ${getBorderClass('state')} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900`}
-              placeholder="NY"
+              placeholder={address.country === 'GB' ? 'ENG, SCT, WLS, NIR, or LND' : 'NY'}
               required
               aria-required="true"
               aria-invalid={getFieldErrors('state').length > 0}
