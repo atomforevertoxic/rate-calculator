@@ -70,15 +70,11 @@ export function PackageDetailsStep({
     }
   }, [localData, onTriggerValidation, validatePackage]);
 
-  // Validate on initial load
-  useEffect(() => {
-    void validatePackage(data);
-  }, [data, validatePackage]);
-
   const handleTypeChange = (type: PackageType) => {
     const updated = { ...localData, type };
     setLocalData(updated);
     onChange({ type });
+    void validatePackage(updated);
   };
 
   const handleDimensionsChange = (dimensions: Package['dimensions']) => {
@@ -117,6 +113,7 @@ export function PackageDetailsStep({
     if (declaredValue !== undefined && declaredValue < 0) {
       console.warn('Declared value cannot be negative');
     }
+    void validatePackage(updated);
   };
 
   const packageTypes: { value: PackageType; label: string; icon: string }[] = [
