@@ -10,6 +10,18 @@ import RatesFilters from './RatesFilters';
 
 type SortOption = 'cost' | 'speed' | 'carrier';
 
+/**
+ * Helper function to safely format delivery dates
+ */
+function formatDeliveryDate(date: Date | string): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString();
+  } catch {
+    return typeof date === 'string' ? date : 'Unknown';
+  }
+}
+
 interface RatesDisplayProps {
   ratesPromise: Promise<RateResponse>;
 }
@@ -92,13 +104,13 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
         onSortChange={handleSortChange}
       />
 
-      {/* View Toggle */}
+      {/* View Toggle - Mobile Only */}
       <div className="flex justify-end gap-2 md:hidden">
         <button
           onClick={() => setShowMobileView(false)}
           className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             !showMobileView
-              ? 'bg-slate-900 text-white'
+              ? 'bg-blue-600 text-white'
               : 'bg-slate-200 text-slate-900 hover:bg-slate-300'
           }`}
         >
@@ -108,7 +120,7 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
           onClick={() => setShowMobileView(true)}
           className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             showMobileView
-              ? 'bg-slate-900 text-white'
+              ? 'bg-blue-600 text-white'
               : 'bg-slate-200 text-slate-900 hover:bg-slate-300'
           }`}
         >
@@ -116,27 +128,48 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
         </button>
       </div>
 
-      {/* Results Display */}
+      {/* Desktop View - Always Show Table */}
       <div className="hidden md:block">
         <RatesComparisonTable rates={filteredRates} />
       </div>
 
-      <div className="md:hidden">
-        <div className="grid gap-4">
-          {filteredRates.map((rate) => (
-            <RateCard key={rate.id} rate={rate} />
-          ))}
-        </div>
+      {/* Mobile View - List or Cards Based on Toggle */}
+      <div className="block md:hidden">
+        {!showMobileView ? (
+          // List View - Compact rows for mobile
+          <div className="space-y-2 border border-slate-200 rounded-lg overflow-hidden bg-white">
+            {filteredRates.map((rate) => (
+              <div
+                key={rate.id}
+                className="border-b last:border-b-0 border-slate-200 p-4 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex justify-between items-start gap-3 mb-2">
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-semibold text-slate-900">{rate.carrier}</h3>
+                    <p className="text-xs text-slate-600 line-clamp-1">{rate.serviceName}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <div className="text-lg font-bold text-green-600">
+                      ${rate.totalCost.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-xs text-slate-600">
+                  <span>📅 {formatDeliveryDate(rate.estimatedDeliveryDate)}</span>
+                  <span className="capitalize">{rate.speed}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Card View - Detailed cards
+          <div className="grid gap-4">
+            {filteredRates.map((rate) => (
+              <RateCard key={rate.id} rate={rate} />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Mobile Cards View Toggle */}
-      {showMobileView && (
-        <div className="block md:hidden space-y-4">
-          {filteredRates.map((rate) => (
-            <RateCard key={rate.id} rate={rate} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
