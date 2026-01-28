@@ -3,6 +3,19 @@
 import type { ShippingRate } from '@/src/types/domain';
 import BestValueBadge from './BestValueBadge';
 
+/**
+ * Helper function to safely format delivery dates
+ * Handles both Date objects and ISO string dates
+ */
+function formatDeliveryDate(date: Date | string): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString();
+  } catch {
+    return typeof date === 'string' ? date : 'Unknown';
+  }
+}
+
 interface RateCardProps {
   rate: ShippingRate;
 }
@@ -27,7 +40,7 @@ export default function RateCard({ rate }: RateCardProps) {
         <div>
           <p className="text-xs font-medium text-slate-500 uppercase">Delivery Date</p>
           <p className="text-sm font-semibold text-slate-900">
-            {rate.estimatedDeliveryDate.toLocaleDateString()}
+            {formatDeliveryDate(rate.estimatedDeliveryDate)}
           </p>
         </div>
         <div>

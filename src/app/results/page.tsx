@@ -1,17 +1,17 @@
 'use client';
 
+import { getCarrierAdapter } from '@/src/adapters/carrier-adapters';
 import RatesDisplay from '@/src/components/results/RatesDisplay';
 import ResultsSkeletonLoader from '@/src/components/results/ResultsSkeletonLoader';
-import { useSearchParams } from 'next/navigation';
+import { loadFormState } from '@/src/lib/form-storage';
+import type { RateResponse } from '@/src/types/domain';
 import { Suspense } from 'react';
 
 export default function ResultsPage() {
-  const searchParams = useSearchParams();
-
   // Create the rates promise at the page level
   // This promise is passed to RatesDisplay inside the Suspense boundary
   // The promise starts fetching immediately when the page renders
-  const ratesPromise = createRatesPromise(searchParams);
+  const ratesPromise = createRatesPromise();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -39,19 +39,83 @@ export default function ResultsPage() {
 }
 
 /**
- * Helper function to create a rates promise based on search parameters
- * In a real app, this would parse the searchParams and construct a RateRequest
- * For now, it returns a mock promise
+ * Helper function to create a rates promise by fetching from real carrier APIs
+ * Loads form data from localStorage and requests rates from available carriers
  */
-function createRatesPromise(_searchParams: URLSearchParams) {
-  // TODO: Parse _searchParams to extract package, addresses, and shipping options
-  // Then construct a proper RateRequest and call fetchRates()
+function createRatesPromise(): Promise<RateResponse> {
+  return (async () => {
+    console.log('📡 [Results Page] Starting real rate fetch...');
 
-  // For now, return a promise that resolves with mock data
-  return Promise.resolve({
-    requestId: 'mock-request-' + Date.now(),
-    rates: [],
-    errors: [],
-    timestamp: new Date(),
-  });
+    // Load form state from localStorage
+    const formState = loadFormState();
+
+    if (!formState) {
+      console.error('❌ [Results Page] No form data found in localStorage');
+      throw new Error('No shipping information found. Please go back and complete the form.');
+    }
+
+    console.log('📋 [Results Page] Form data loaded from localStorage:', {
+      package: formState.package,
+      origin: formState.origin,
+      destination: formState.destination,
+      options: formState.options,
+    });
+
+    const rateResponse: RateResponse = {
+      requestId: `result-${Date.now()}`,
+      rates: [],
+      errors: [],
+      timestamp: new Date(),
+    };
+
+    // Fetch rates from FedEx
+    try {
+      console.log('🔑 [FedEx] Getting adapter instance...');
+      const fedexAdapter = getCarrierAdapter('FedEx');
+
+      console.log('📨 [FedEx] Requesting rates with the following data:');
+      console.log('   Package:', formState.package);
+      console.log('   Origin:', formState.origin);
+      console.log('   Destination:', formState.destination);
+      console.log('   Options:', formState.options);
+
+      const fedexRates = await fedexAdapter.fetchRates({
+        package: formState.package,
+        origin: formState.origin,
+        destination: formState.destination,
+        options: formState.options,
+      });
+
+      console.log(`✅ [FedEx] Successfully fetched ${fedexRates.length} rates`);
+      console.log(
+        '💰 [FedEx] Rates details:',
+        fedexRates.map((r) => ({
+          id: r.id,
+          carrier: r.carrier,
+          serviceName: r.serviceName,
+          speed: r.speed,
+          totalCost: r.totalCost,
+          estimatedDeliveryDate: r.estimatedDeliveryDate,
+        }))
+      );
+
+      rateResponse.rates = fedexRates;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ [FedEx] Error fetching rates:', errorMessage);
+      rateResponse.errors.push({
+        carrier: 'FedEx',
+        message: errorMessage,
+        recoverable: true,
+      });
+    }
+
+    console.log('📊 [Results Page] Final response:', {
+      rateCount: rateResponse.rates.length,
+      errorCount: rateResponse.errors.length,
+      timestamp: rateResponse.timestamp,
+    });
+
+    return rateResponse;
+  })();
 }

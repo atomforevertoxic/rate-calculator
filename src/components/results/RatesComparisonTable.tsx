@@ -3,10 +3,23 @@
 import type { CarrierName, ShippingRate } from '@/src/types/domain';
 import { useCallback, useMemo, useState } from 'react';
 import BestValueBadge from './BestValueBadge';
-import { CarrierLogo, FeeBreakdown, FeaturesList, SortIcon } from './helpers';
+import { CarrierLogo, FeaturesList, FeeBreakdown, SortIcon } from './helpers';
 
 type SortField = 'carrier' | 'service' | 'price' | 'speed' | 'delivery';
 type SortDirection = 'asc' | 'desc';
+
+/**
+ * Helper function to safely format delivery dates
+ * Handles both Date objects and ISO string dates
+ */
+function formatDeliveryDate(date: Date | string): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString();
+  } catch {
+    return typeof date === 'string' ? date : 'Unknown';
+  }
+}
 
 interface RatesComparisonTableProps {
   rates: ShippingRate[];
@@ -200,7 +213,7 @@ export default function RatesComparisonTable({
               {/* Delivery Date */}
               <td className="px-6 py-4 text-sm">
                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-blue-700 font-medium">
-                  📅 {rate.estimatedDeliveryDate.toLocaleDateString()}
+                  📅 {formatDeliveryDate(rate.estimatedDeliveryDate)}
                 </span>
               </td>
 

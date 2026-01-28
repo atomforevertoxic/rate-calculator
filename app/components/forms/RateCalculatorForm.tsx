@@ -1,7 +1,9 @@
 // This is a client component
 'use client';
 
+import { saveFormState } from '@/src/lib/form-storage';
 import { Address, CarrierName, Package, RateRequest, ShippingOptions } from '@/src/types/domain';
+import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { AddressStep } from '../AddressStep';
 import { PackageDetailsStep } from '../PackageDetailsStep';
@@ -19,6 +21,7 @@ interface FormState {
 }
 
 export default function RateCalculatorForm() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carriersFilter, setCarriersFilter] = useState<CarrierName[] | undefined>();
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
@@ -94,16 +97,25 @@ export default function RateCalculatorForm() {
         carriersFilter: carriersFilter,
       };
 
-      console.warn('Submitting RateRequest:', rateRequest);
-      // Here will be the API call
+      console.log('💾 [Form Submit] Saving form state to localStorage...');
+      console.log('📋 RateRequest:', rateRequest);
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Save form state to localStorage for results page to fetch
+      saveFormState({
+        package: formData.package,
+        origin: formData.origin,
+        destination: formData.destination,
+        options: formData.options,
+      });
 
-      alert('Rates calculated successfully! (This is a demo. In Phase 3, real rates will appear.)');
+      console.log('✅ [Form Submit] Form state saved successfully');
+      console.log('🚀 [Form Submit] Navigating to results page...');
+
+      // Navigate to results page - results page will fetch real rates from FedEx API
+      router.push('/results');
     } catch (error) {
-      console.error('Error calculating rates:', error);
-      alert('Error calculating rates. Please try again.');
-    } finally {
+      console.error('❌ [Form Submit] Error:', error);
+      alert('Error submitting form. Please try again.');
       setIsSubmitting(false);
     }
   };
