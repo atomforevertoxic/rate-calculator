@@ -42,9 +42,9 @@ export default function FeeBreakdown({ baseRate, additionalFees }: FeeBreakdownP
             <span>${baseRate.toFixed(2)}</span>
           </div>
           {additionalFees.map((fee, index) => (
-            <div key={index} className="flex justify-between text-xs text-slate-600">
-              <span>{fee.description}:</span>
-              <span>+${fee.amount.toFixed(2)}</span>
+            <div key={index} className="flex justify-between text-xs text-slate-600 gap-2">
+              <span className="truncate">{fee.description}:</span>
+              <span className="flex-shrink-0">+${fee.amount.toFixed(2)}</span>
             </div>
           ))}
           <div className="border-t border-slate-200 pt-1 flex justify-between font-medium text-slate-900">

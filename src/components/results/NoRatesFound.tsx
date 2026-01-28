@@ -9,9 +9,6 @@ export default function NoRatesFound() {
         We couldn't find any shipping rates matching your criteria. Please try adjusting your
         filters or contact support for assistance.
       </p>
-      <button className="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-6 py-2 text-sm font-medium text-white hover:bg-slate-800 transition-colors">
-        ← Back to Calculator
-      </button>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface FeaturesListProps {
   features: string[];
   guaranteedDelivery: boolean;
@@ -14,27 +16,41 @@ export default function FeaturesList({
   guaranteedDelivery,
   maxDisplay = 3,
 }: FeaturesListProps) {
+  const [showAll, setShowAll] = useState(false);
   const allFeatures = guaranteedDelivery ? ['Guaranteed Delivery', ...features] : features;
-  const displayedFeatures = allFeatures.slice(0, maxDisplay);
+  const displayedFeatures = showAll ? allFeatures : allFeatures.slice(0, maxDisplay);
   const hiddenCount = Math.max(0, allFeatures.length - maxDisplay);
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {displayedFeatures.map((feature) => (
-        <span
-          key={feature}
-          className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800"
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {displayedFeatures.map((feature) => (
+          <span
+            key={feature}
+            className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800"
+          >
+            {feature === 'Guaranteed Delivery' ? '✓' : ''} {feature}
+          </span>
+        ))}
+        {allFeatures.length === 0 && (
+          <span className="text-xs text-slate-500 italic">No special features</span>
+        )}
+      </div>
+      {hiddenCount > 0 && !showAll && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
         >
-          {feature === 'Guaranteed Delivery' ? '✓' : ''} {feature}
-        </span>
-      ))}
-      {hiddenCount > 0 && (
-        <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-          +{hiddenCount} more
-        </span>
+          +{hiddenCount} more features
+        </button>
       )}
-      {allFeatures.length === 0 && (
-        <span className="text-xs text-slate-500 italic">No special features</span>
+      {showAll && hiddenCount > 0 && (
+        <button
+          onClick={() => setShowAll(false)}
+          className="mt-2 text-xs text-slate-600 hover:text-slate-700 font-medium"
+        >
+          Show less
+        </button>
       )}
     </div>
   );
