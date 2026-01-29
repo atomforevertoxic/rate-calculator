@@ -4,11 +4,9 @@
 import { validateAddress as serverValidateAddress } from '@/src/app/api/validate-address/route';
 import { ValidationError } from '@/src/services/validators/validation-chain';
 import { Address } from '@/src/types/domain';
-import { useEffect, useRef, useTransition } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState, useEffect, useRef, useTransition } from 'react';
 import { AddressForm } from './forms/AddressForm';
 
-// Define the state structure for useFormState
 interface AddressFormState {
   errors: ValidationError[];
 }
@@ -39,10 +37,8 @@ export function AddressStep({
   onValidationChange,
   onTriggerValidation,
 }: AddressStepProps) {
-  // useFormState hook to manage the state after server action submission for origin address
-  const [originFormState, originAction] = useFormState(serverValidateAddress, initialState);
-  // useFormState hook to manage the state after server action submission for destination address
-  const [destinationFormState, destinationAction] = useFormState(
+  const [originFormState, originAction] = useActionState(serverValidateAddress, initialState);
+  const [destinationFormState, destinationAction] = useActionState(
     serverValidateAddress,
     initialState
   );
@@ -75,17 +71,33 @@ export function AddressStep({
   useEffect(() => {
     if (onTriggerValidation) {
       onTriggerValidation(async (originFormData, destinationFormData) => {
-        // Submit origin form to trigger server validation
-        void originAction(originFormData);
-        // Submit destination form to trigger server validation
-        void destinationAction(destinationFormData);
+        // Track when both validations complete
+        let originComplete = false;
+        let destinationComplete = false;
 
-        // The `useFormState` hook updates asynchronously.
-        // We need a mechanism to wait for its state to reflect the latest submission.
-        // A simple setTimeout is used here for demonstration, but a more robust solution
-        // would involve custom hooks that combine `useFormStatus` and `useFormState`
-        // to return completion promises from the action.
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Submit origin form to trigger server validation within a transition
+        startOriginTransition(() => {
+          originAction(originFormData);
+          originComplete = true;
+        });
+
+        // Submit destination form to trigger server validation within a transition
+        startDestinationTransition(() => {
+          destinationAction(destinationFormData);
+          destinationComplete = true;
+        });
+
+        // Wait for both to complete
+        await new Promise((resolve) => {
+          const checkCompletion = () => {
+            if (originComplete && destinationComplete) {
+              resolve(true);
+            } else {
+              setTimeout(checkCompletion, 50);
+            }
+          };
+          checkCompletion();
+        });
 
         return {
           origin: originFormState.errors.length === 0,
@@ -99,6 +111,8 @@ export function AddressStep({
     destinationAction,
     originFormState.errors,
     destinationFormState.errors,
+    startOriginTransition,
+    startDestinationTransition,
   ]);
 
   // Handler for origin address changes, with debounced server validation

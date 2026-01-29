@@ -22,6 +22,18 @@ function formatDeliveryDate(date: Date | string): string {
   }
 }
 
+/**
+ * Helper function to convert delivery date to milliseconds for comparison
+ */
+function getDeliveryDateTime(date: Date | string): number {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.getTime();
+  } catch {
+    return 0;
+  }
+}
+
 interface RatesDisplayProps {
   ratesPromise: Promise<RateResponse>;
 }
@@ -49,7 +61,9 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
         break;
       case 'date':
         filtered = [...filtered].sort(
-          (a, b) => a.estimatedDeliveryDate.getTime() - b.estimatedDeliveryDate.getTime()
+          (a, b) =>
+            getDeliveryDateTime(a.estimatedDeliveryDate) -
+            getDeliveryDateTime(b.estimatedDeliveryDate)
         );
         break;
       case 'value':
