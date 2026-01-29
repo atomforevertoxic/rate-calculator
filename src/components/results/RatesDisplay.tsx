@@ -8,7 +8,7 @@ import RatesComparisonTable from './RatesComparisonTable';
 import RatesErrorDisplay from './RatesErrorDisplay';
 import RatesFilters from './RatesFilters';
 
-type SortOption = 'cost' | 'speed' | 'carrier';
+type SortOption = 'cost' | 'date' | 'value';
 
 /**
  * Helper function to safely format delivery dates
@@ -47,17 +47,22 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
       case 'cost':
         filtered = [...filtered].sort((a, b) => a.totalCost - b.totalCost);
         break;
-      case 'speed':
-        filtered = [...filtered].sort((a, b) => {
-          const speedOrder = { overnight: 0, 'two-day': 1, standard: 2, economy: 3 };
-          return (
-            (speedOrder[a.speed as keyof typeof speedOrder] ?? 4) -
-            (speedOrder[b.speed as keyof typeof speedOrder] ?? 4)
-          );
-        });
+      case 'date':
+        filtered = [...filtered].sort(
+          (a, b) => a.estimatedDeliveryDate.getTime() - b.estimatedDeliveryDate.getTime()
+        );
         break;
-      case 'carrier':
-        filtered = [...filtered].sort((a, b) => a.carrier.localeCompare(b.carrier));
+      case 'value':
+        // Sort by best value: balance of speed and cost
+        // Lower index = faster, multiply by base rate for value score
+        filtered = [...filtered].sort((a, b) => {
+          const speedOrder = { overnight: 4, 'two-day': 3, standard: 2, economy: 1 };
+          const aSpeed = speedOrder[a.speed as keyof typeof speedOrder] ?? 0;
+          const bSpeed = speedOrder[b.speed as keyof typeof speedOrder] ?? 0;
+          const aValue = (aSpeed / a.baseRate) * 100; // Higher value is better
+          const bValue = (bSpeed / b.baseRate) * 100;
+          return bValue - aValue; // Sort descending
+        });
         break;
     }
 
@@ -72,6 +77,15 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
 
   const handleSortChange = useCallback((option: SortOption) => {
     setSortBy(option);
+  }, []);
+
+  // Memoize mobile view toggle handlers
+  const handleShowListView = useCallback(() => {
+    setShowMobileView(false);
+  }, []);
+
+  const handleShowCardsView = useCallback(() => {
+    setShowMobileView(true);
   }, []);
 
   // Show error display if there are carrier errors
@@ -107,7 +121,7 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
       {/* View Toggle - Mobile Only */}
       <div className="flex justify-end gap-2 md:hidden">
         <button
-          onClick={() => setShowMobileView(false)}
+          onClick={handleShowListView}
           className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             !showMobileView
               ? 'bg-blue-600 text-white'
@@ -117,7 +131,7 @@ export default function RatesDisplay({ ratesPromise }: RatesDisplayProps) {
           List
         </button>
         <button
-          onClick={() => setShowMobileView(true)}
+          onClick={handleShowCardsView}
           className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             showMobileView
               ? 'bg-blue-600 text-white'

@@ -1,6 +1,10 @@
 'use client';
 
-type SortOption = 'cost' | 'speed' | 'carrier';
+import { useCallback, useState } from 'react';
+import CarrierCheckboxGroup from './RatesFilters/CarrierCheckboxGroup';
+import ServiceSpeedFilter, { type ServiceSpeed } from './RatesFilters/ServiceSpeedFilter';
+
+type SortOption = 'cost' | 'date' | 'value';
 
 interface RatesFiltersProps {
   selectedCarriers: string[];
@@ -17,51 +21,77 @@ export default function RatesFilters({
   sortBy,
   onSortChange,
 }: RatesFiltersProps) {
+  const [selectedSpeeds, setSelectedSpeeds] = useState<ServiceSpeed[]>([]);
+
+  // Memoize the speed toggle callback to prevent child re-renders
+  const handleSpeedToggle = useCallback((speed: ServiceSpeed) => {
+    setSelectedSpeeds((prev) =>
+      prev.includes(speed) ? prev.filter((s) => s !== speed) : [...prev, speed]
+    );
+  }, []);
+
+  // Memoize the sort change callback wrapper
+  const handleSortChange = useCallback(
+    (value: string) => {
+      onSortChange(value as SortOption);
+    },
+    [onSortChange]
+  );
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="grid gap-6 md:grid-cols-2">
+    <div className="rounded-lg bg-slate-50 p-6 border border-slate-200">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Carrier Filters */}
         <div>
-          <h3 className="mb-4 text-sm font-semibold text-slate-900">Carriers</h3>
-          <div className="space-y-3">
-            {AVAILABLE_CARRIERS.map((carrier) => (
-              <label key={carrier} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedCarriers.includes(carrier)}
-                  onChange={() => onCarrierToggle(carrier)}
-                  className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-                />
-                <span className="text-sm text-slate-700">{carrier}</span>
-              </label>
-            ))}
-          </div>
+          <CarrierCheckboxGroup
+            selectedCarriers={selectedCarriers}
+            onCarrierToggle={onCarrierToggle}
+            availableCarriers={AVAILABLE_CARRIERS as unknown as string[]}
+          />
         </div>
 
-        {/* Sort Options */}
+        {/* Sort By Dropdown */}
         <div>
           <h3 className="mb-4 text-sm font-semibold text-slate-900">Sort By</h3>
-          <div className="space-y-3">
-            {[
-              { value: 'cost' as const, label: 'Price (Low to High)' },
-              { value: 'speed' as const, label: 'Delivery Speed' },
-              { value: 'carrier' as const, label: 'Carrier Name' },
-            ].map((option) => (
-              <label key={option.value} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sort"
-                  value={option.value}
-                  checked={sortBy === option.value}
-                  onChange={() => onSortChange(option.value)}
-                  className="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
-                />
-                <span className="text-sm text-slate-700">{option.label}</span>
-              </label>
+          <select
+            value={sortBy}
+            onChange={(e) => handleSortChange(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors"
+          >
+            <option value="cost">Lowest Price</option>
+            <option value="date">Earliest Delivery</option>
+            <option value="value">Best Value</option>
+          </select>
+        </div>
+
+        {/* Delivery Speed Filter */}
+        <div>
+          <ServiceSpeedFilter selectedSpeeds={selectedSpeeds} onSpeedToggle={handleSpeedToggle} />
+        </div>
+      </div>
+
+      {/* Active Filters Summary */}
+      {selectedSpeeds.length > 0 && (
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="flex flex-wrap gap-2">
+            {selectedSpeeds.map((speed) => (
+              <span
+                key={speed}
+                className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"
+              >
+                {speed}
+                <button
+                  onClick={() => handleSpeedToggle(speed)}
+                  className="ml-1 hover:text-blue-900"
+                  aria-label={`Remove ${speed} filter`}
+                >
+                  ✕
+                </button>
+              </span>
             ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

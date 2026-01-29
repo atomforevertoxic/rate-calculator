@@ -3,6 +3,7 @@
 import RatesDisplay from '@/src/components/results/RatesDisplay';
 import ResultsSkeletonLoader from '@/src/components/results/ResultsSkeletonLoader';
 import { loadFormState } from '@/src/lib/form-storage';
+import { loadResults, saveResults } from '@/src/lib/results-storage';
 import type { RateResponse } from '@/src/types/domain';
 import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
@@ -65,12 +66,12 @@ export default function ResultsPage() {
 
 /**
  * Helper function to create a rates promise by calling our server-side API
- * Loads form data from localStorage and calls /api/rates endpoint
- * The API endpoint handles calling carrier adapters on the server-side (avoiding CORS issues)
+ * Implements results caching with 30-minute TTL to improve UX and reduce API calls
+ * Load cached results first, only fetch from API if cache is invalid or expired
  */
 function createRatesPromise(): Promise<RateResponse> {
   return (async () => {
-    console.log('📡 [Results Page] Starting real rate fetch...');
+    console.log('📡 [Results Page] Starting rate fetch with caching...');
 
     // Check if we're in the browser (client-side)
     if (typeof window === 'undefined') {
@@ -93,10 +94,17 @@ function createRatesPromise(): Promise<RateResponse> {
       options: formState.options,
     });
 
-    // Call our server-side API endpoint to fetch rates
+    // Try to load cached results first
+    const cachedData = loadResults();
+    if (cachedData) {
+      console.log('⚡ [Results Page] Using cached rate results');
+      return cachedData.response;
+    }
+
+    // Cache miss or expired - fetch from API
     // This avoids CORS issues that occur when calling external APIs from the browser
     try {
-      console.log('🌐 [Results Page] Calling /api/rates endpoint...');
+      console.log('🌐 [Results Page] Cache miss - calling /api/rates endpoint...');
 
       const response = await fetch('/api/rates', {
         method: 'POST',
@@ -138,6 +146,15 @@ function createRatesPromise(): Promise<RateResponse> {
         errorCount: rateResponse.errors.length,
         timestamp: rateResponse.timestamp,
       });
+
+      // Save successful results to cache
+      const rateRequest = {
+        package: formState.package,
+        origin: formState.origin,
+        destination: formState.destination,
+        options: formState.options,
+      };
+      saveResults(rateRequest, rateResponse);
 
       return rateResponse;
     } catch (error) {

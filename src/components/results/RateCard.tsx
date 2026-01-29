@@ -1,7 +1,7 @@
 'use client';
 
 import type { ShippingRate } from '@/src/types/domain';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import BestValueBadge from './BestValueBadge';
 import CarrierLogo from './helpers/CarrierLogo';
 import FeaturesList from './helpers/FeaturesList';
@@ -38,11 +38,24 @@ interface RateCardProps {
 /**
  * Mobile-friendly card component for displaying a single shipping rate
  * Features expandable fee breakdown, carrier logo, and one-tap selection
+ * Wrapped in React.memo to prevent re-renders when parent updates
+ * but rate.id or isBestValue props don't change
  */
-export default function RateCard({ rate, isBestValue = false }: RateCardProps) {
+function RateCard({ rate, isBestValue = false }: RateCardProps) {
   const [isFeesExpanded, setIsFeesExpanded] = useState(false);
-  const businessDays = calculateBusinessDays(rate.estimatedDeliveryDate);
-  const totalFees = rate.additionalFees.reduce((sum, fee) => sum + fee.amount, 0);
+
+  // Memoize expensive calculations
+  const businessDays = useMemo(
+    () => calculateBusinessDays(rate.estimatedDeliveryDate),
+    [rate.estimatedDeliveryDate]
+  );
+
+  const totalFees = useMemo(
+    () => rate.additionalFees.reduce((sum, fee) => sum + fee.amount, 0),
+    [rate.additionalFees]
+  );
+
+  const baseRate = useMemo(() => rate.totalCost - totalFees, [rate.totalCost, totalFees]);
 
   return (
     <div
@@ -80,9 +93,7 @@ export default function RateCard({ rate, isBestValue = false }: RateCardProps) {
           <p className="text-xs font-medium text-slate-500 uppercase mb-1">Total Cost</p>
           <div className="text-2xl font-bold text-green-600">${rate.totalCost.toFixed(2)}</div>
           {totalFees > 0 && (
-            <p className="text-xs text-slate-500 mt-1">
-              Base: ${(rate.totalCost - totalFees).toFixed(2)}
-            </p>
+            <p className="text-xs text-slate-500 mt-1">Base: ${baseRate.toFixed(2)}</p>
           )}
         </div>
 
@@ -111,7 +122,7 @@ export default function RateCard({ rate, isBestValue = false }: RateCardProps) {
             <div className="mt-3 space-y-2 pt-3 border-t border-slate-200">
               <div className="flex justify-between text-xs text-slate-600">
                 <span>Base Rate</span>
-                <span className="font-medium">${(rate.totalCost - totalFees).toFixed(2)}</span>
+                <span className="font-medium">${baseRate.toFixed(2)}</span>
               </div>
               {rate.additionalFees.map((fee, index) => (
                 <div key={index} className="flex justify-between text-xs text-slate-600">
@@ -147,3 +158,11 @@ export default function RateCard({ rate, isBestValue = false }: RateCardProps) {
     </div>
   );
 }
+
+// Custom comparison function for React.memo
+// Only re-render if rate.id or isBestValue changes
+const RateCardMemo = React.memo(RateCard, (prevProps, nextProps) => {
+  return prevProps.rate.id === nextProps.rate.id && prevProps.isBestValue === nextProps.isBestValue;
+});
+
+export default RateCardMemo;
