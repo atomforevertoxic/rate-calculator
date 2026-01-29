@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import CarrierCheckboxGroup from './RatesFilters/CarrierCheckboxGroup';
-import ServiceSpeedFilter, { type ServiceSpeed } from './RatesFilters/ServiceSpeedFilter';
+import { type ServiceSpeed } from './RatesFilters/ServiceSpeedFilter';
 
 type SortOption = 'cost' | 'date' | 'value';
 
@@ -62,11 +62,6 @@ export default function RatesFilters({
             <option value="date">Earliest Delivery</option>
             <option value="value">Best Value</option>
           </select>
-        </div>
-
-        {/* Delivery Speed Filter */}
-        <div>
-          <ServiceSpeedFilter selectedSpeeds={selectedSpeeds} onSpeedToggle={handleSpeedToggle} />
         </div>
       </div>
 

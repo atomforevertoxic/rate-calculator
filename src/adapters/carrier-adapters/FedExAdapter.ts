@@ -236,7 +236,8 @@ export class FedExAdapter implements CarrierAdapter {
   private getStateCode(stateISO: string | undefined): string | undefined {
     if (!stateISO) return undefined;
 
-    return stateISO.split('-')[1];
+    const parts = stateISO.split('-');
+    return parts.length === 2 ? parts[1] : parts[0];
   }
 
   private mapServiceTypeToSpeed(serviceType: FedExServiceType): ServiceSpeed {
@@ -287,7 +288,7 @@ export class FedExAdapter implements CarrierAdapter {
       features.push('Fragile Handling');
     }
 
-    if (options.insurance) {
+    if (options.insurance && options.insuredValue) {
       features.push(`Insurance: $${options.insuredValue}`);
     }
 
