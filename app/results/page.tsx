@@ -6,19 +6,46 @@ import { loadFormState } from '@/src/lib/form-storage';
 import { loadResults, saveResults } from '@/src/lib/results-storage';
 import type { RateResponse } from '@/src/types/domain';
 import { useRouter } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+
+// A special promise class to indicate that the promise should only be resolved on the client.
+// This prevents Next.js from trying to resolve it during SSR.
+class DeferredClientPromise extends Promise<RateResponse> {
+  constructor() {
+    super(() => {}); // A promise that never resolves or rejects on its own
+  }
+}
 
 export default function ResultsPage() {
   const router = useRouter();
+  // Initialize ratesPromise to null or a deferred promise on the server
+  const [ratesPromise, setRatesPromise] = useState<Promise<RateResponse> | DeferredClientPromise>(
+    () => {
+      // On server, return a deferred promise that won't resolve
+      if (typeof window === 'undefined') {
+        return new DeferredClientPromise();
+      }
+      // On client, immediately create the real promise
+      return createRatesPromise();
+    }
+  );
 
-  // Create the rates promise at the page level
-  // This promise is passed to RatesDisplay inside the Suspense boundary
-  // The promise starts fetching immediately when the page renders
-  const ratesPromise = createRatesPromise();
+  useEffect(() => {
+    // If ratesPromise is a DeferredClientPromise (meaning we were on the server initially),
+    // then create the real promise when hydrating on the client.
+    if (ratesPromise instanceof DeferredClientPromise) {
+      setRatesPromise(createRatesPromise());
+    }
+  }, [ratesPromise]);
 
   const handleBackToCalculator = () => {
     router.push('/');
   };
+
+  // While `ratesPromise` is a DeferredClientPromise or still null, show loading
+  if (!ratesPromise || ratesPromise instanceof DeferredClientPromise) {
+    return <ResultsSkeletonLoader />;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
@@ -53,9 +80,6 @@ export default function ResultsPage() {
         </header>
 
         {/* Suspense Boundary for Async Rate Fetching */}
-        {/* Suspense shows the fallback while the promise is pending */}
-        {/* When the promise resolves, RatesDisplay renders with the data */}
-        {/* If the promise rejects, the nearest Error Boundary catches it */}
         <Suspense fallback={<ResultsSkeletonLoader />}>
           <RatesDisplay ratesPromise={ratesPromise} />
         </Suspense>
@@ -65,19 +89,19 @@ export default function ResultsPage() {
 }
 
 /**
- * Helper function to create a rates promise by calling our server-side API
- * Implements results caching with 30-minute TTL to improve UX and reduce API calls
- * Load cached results first, only fetch from API if cache is invalid or expired
+ * Helper function to create a rates promise by calling our server-side API.
+ * Implements results caching with 30-minute TTL to improve UX and reduce API calls.
+ * Loads cached results first, only fetches from API if cache is invalid or expired.
  */
 function createRatesPromise(): Promise<RateResponse> {
+  // This function should only be called on the client-side, or after window is defined.
+  if (typeof window === 'undefined') {
+    // If this assertion fails, it means createRatesPromise was called improperly.
+    throw new Error('createRatesPromise called on the server. This should not happen.');
+  }
+
   return (async () => {
     console.log('📡 [Results Page] Starting rate fetch with caching...');
-
-    // Check if we're in the browser (client-side)
-    if (typeof window === 'undefined') {
-      console.log('⚠️ [Results Page] Running on server-side, cannot access localStorage yet');
-      throw new Error('Loading...');
-    }
 
     // Load form state from localStorage
     const formState = loadFormState();
@@ -102,7 +126,6 @@ function createRatesPromise(): Promise<RateResponse> {
     }
 
     // Cache miss or expired - fetch from API
-    // This avoids CORS issues that occur when calling external APIs from the browser
     try {
       console.log('🌐 [Results Page] Cache miss - calling /api/rates endpoint...');
 
