@@ -30,10 +30,6 @@ export default function RatesErrorDisplay({ errors }: RatesErrorDisplayProps) {
           </div>
         ))}
       </div>
-
-      <button className="inline-flex items-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 transition-colors">
-        ← Back to Calculator
-      </button>
     </div>
   );
 }
